@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"custom_auth_api/internal/infrastructure/emailsender"
 	"custom_auth_api/internal/infrastructure/firebase"
 	"custom_auth_api/internal/infrastructure/persistence"
 	"custom_auth_api/internal/interface/handler"
@@ -24,11 +25,12 @@ func main() {
 		log.Fatalf("Failed to initialize Firebase: %v", err)
 	}
 
-	// Initialize OTPRepository
+	// Initialize dependencies
 	otpRepo := persistence.NewOTPRepository(firestoreClient)
+	emailSender := emailsender.NewDummyEmailSender()
 
 	// Initialize OTPService
-	otpService := usecase.NewOTPService(otpRepo)
+	otpService := usecase.NewOTPService(otpRepo, emailSender)
 
 	// Create the auth handler, injecting the OTPService
 	authHandler := handler.NewAuthHandler(otpService)
