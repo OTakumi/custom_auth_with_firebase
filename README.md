@@ -49,7 +49,7 @@ sequenceDiagram
 
 1.  **Clone the Repository:**
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/OTakumi/custom_auth_with_firebase.git
     cd custom_auth_with_firebase
     ```
 
