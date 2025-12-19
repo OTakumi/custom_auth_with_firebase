@@ -1,30 +1,41 @@
 package usecase
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"io"
 	"log"
+
+	"custom_auth_api/internal/domain/repository" // Import the repository interface
 )
 
 const otpLength = 6
 
 // OTPService handles OTP related business logic, such as generation, storage, and sending.
-type OTPService struct{}
-
-// NewOTPService creates a new OTPService.
-func NewOTPService() *OTPService {
-	return &OTPService{}
+type OTPService struct {
+	otpRepo repository.OTPRepository // Dependency on OTPRepository interface
 }
 
-// GenerateOTP generates a 6-digit one-time password and logs it.
-func (s *OTPService) GenerateOTP(email string) (string, error) {
+// NewOTPService creates a new OTPService.
+func NewOTPService(otpRepo repository.OTPRepository) *OTPService {
+	return &OTPService{otpRepo: otpRepo}
+}
+
+// GenerateAndSaveOTP generates a 6-digit one-time password and saves it to the repository.
+func (s *OTPService) GenerateAndSaveOTP(ctx context.Context, email string) (string, error) {
 	otp, err := generate6DigitCode()
 	if err != nil {
 		return "", fmt.Errorf("failed to generate OTP: %w", err)
 	}
 
-	// For now, just print the OTP to the console.
+	// Save the OTP to the repository
+	err = s.otpRepo.Save(ctx, email, otp)
+	if err != nil {
+		return "", fmt.Errorf("failed to save OTP: %w", err)
+	}
+
+	// For now, also log the OTP to the console for visibility.
 	log.Printf("OTP for %s: %s", email, otp)
 
 	return otp, nil
