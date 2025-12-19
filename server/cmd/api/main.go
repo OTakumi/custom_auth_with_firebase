@@ -1,9 +1,10 @@
 package main
 
 import (
-	"custom_auth_api/internal/interface/handler"
 	"log"
-	"net/http" // Add this import
+	"net/http"
+
+	"custom_auth_api/internal/interface/handler"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +19,7 @@ func main() {
 	// Register the routes
 	router.POST("/auth/otp", authHandler.RequestOTP)
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{ // Changed 200 to http.StatusOK
+		c.JSON(http.StatusOK, gin.H{
 			"message": "OK",
 		})
 	})
