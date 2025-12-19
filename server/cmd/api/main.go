@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"custom_auth_api/internal/interface/handler"
+	"custom_auth_api/internal/usecase"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,8 +14,11 @@ func main() {
 	// Create a new Gin router
 	router := gin.Default()
 
-	// Create the auth handler
-	authHandler := handler.NewAuthHandler()
+	// Initialize OTPService
+	otpService := usecase.NewOTPService()
+
+	// Create the auth handler, injecting the OTPService
+	authHandler := handler.NewAuthHandler(otpService)
 
 	// Register the routes
 	router.POST("/auth/otp", authHandler.RequestOTP)
