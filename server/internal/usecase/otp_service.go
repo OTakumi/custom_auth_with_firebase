@@ -7,23 +7,25 @@ import (
 	"io"
 	"log"
 
-	"custom_auth_api/internal/domain/repository" // Import the repository interface
+	"custom_auth_api/internal/domain/emailsender"
+	"custom_auth_api/internal/domain/repository"
 )
 
 const otpLength = 6
 
 // OTPService handles OTP related business logic, such as generation, storage, and sending.
 type OTPService struct {
-	otpRepo repository.OTPRepository // Dependency on OTPRepository interface
+	otpRepo     repository.OTPRepository
+	emailSender emailsender.EmailSender
 }
 
 // NewOTPService creates a new OTPService.
-func NewOTPService(otpRepo repository.OTPRepository) *OTPService {
-	return &OTPService{otpRepo: otpRepo}
+func NewOTPService(otpRepo repository.OTPRepository, emailSender emailsender.EmailSender) *OTPService {
+	return &OTPService{otpRepo: otpRepo, emailSender: emailSender}
 }
 
-// GenerateAndSaveOTP generates a 6-digit one-time password and saves it to the repository.
-func (s *OTPService) GenerateAndSaveOTP(ctx context.Context, email string) (string, error) {
+// GenerateAndSendOTP generates a 6-digit one-time password, saves it to the repository, and sends it via email.
+func (s *OTPService) GenerateAndSendOTP(ctx context.Context, email string) (string, error) {
 	otp, err := generate6DigitCode()
 	if err != nil {
 		return "", fmt.Errorf("failed to generate OTP: %w", err)
@@ -35,15 +37,21 @@ func (s *OTPService) GenerateAndSaveOTP(ctx context.Context, email string) (stri
 		return "", fmt.Errorf("failed to save OTP: %w", err)
 	}
 
-	// For now, also log the OTP to the console for visibility.
-	log.Printf("OTP for %s: %s", email, otp)
+	// Send the OTP via email
+	err = s.emailSender.SendOTP(ctx, email, otp)
+	if err != nil {
+		return "", fmt.Errorf("failed to send OTP email: %w", err)
+	}
+
+	// For now, also log the OTP to the console for visibility (optional after email sending is fully implemented).
+	log.Printf("OTP for %s: %s (sent via email sender)", email, otp)
 
 	return otp, nil
 }
 
 // generate6DigitCode generates a random 6-digit string.
 func generate6DigitCode() (string, error) {
-	var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
+	table := [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
 
 	b := make([]byte, otpLength)
 

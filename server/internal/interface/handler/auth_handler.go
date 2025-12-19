@@ -42,7 +42,7 @@ func (h *AuthHandler) RequestOTP(c *gin.Context) {
 	}
 
 	// Generate and save OTP using the service
-	otp, err := h.otpService.GenerateAndSaveOTP(c.Request.Context(), req.Email)
+	otp, err := h.otpService.GenerateAndSendOTP(c.Request.Context(), req.Email)
 	if err != nil {
 		log.Printf("Error generating and saving OTP for %s: %v", req.Email, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate and save OTP"})
