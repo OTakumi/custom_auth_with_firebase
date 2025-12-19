@@ -21,29 +21,31 @@ sequenceDiagram
     participant EmailService
     participant FirebaseAuth
 
-    %% --- OTP発行依頼プロセス ---
-    rect rgb(128, 128, 128, 0.05)
-    　Note over User, EmailService: OTP発行依頼プロセス
-    　User->>Client: 1. メールアドレス入力
-    　Client->>API: 2. POST /auth/otp
-    　API->>API: 3. 6桁のOTP生成
-    　API->>Firestore: 4. OTPと有効期限を保存
-    　API->>EmailService: 5. メール送信依頼
-    　EmailService-->>User: 6. OTPコード通知
+    %% --- OTP Request Process ---
+    rect rgb(128, 128, 128, 0.1)
+        Note over User, EmailService: OTP Request Process
+        User->>Client: 1. Enter email address
+        Client->>API: 2. POST /auth/otp
+        API->>API: 3. Generate 6-digit OTP
+        API->>Firestore: 4. Store OTP and expiration
+        API->>EmailService: 5. Request to send email
+        EmailService-->>User: 6. Notify OTP code via email
     end
 
-    %% --- OTP入力・トークン発行プロセス ---
-    rect rgb(128, 128, 128, 0.05)
-    　Note over User, FirebaseAuth: OTP入力・トークン発行プロセス
-    　User->>Client: 7. 受信したOTPを入力
-    　Client->>API: 8. POST /auth/verify (OTP送信)
-    　API->>Firestore: 9. OTPの照合・有効期限確認
-    　API->>Firestore: 10. 使用済みOTPの削除
-    　API->>FirebaseAuth: 11. カスタムトークンの生成
-    　API-->>Client: 12. カスタムトークンを返却
+    User->>Client: (Check email and copy code)
+
+    %% --- OTP Verification & Token Issuance Process ---
+    rect rgb(128, 128, 128, 0.1)
+        Note over User, FirebaseAuth: Verification & Token Issuance
+        User->>Client: 7. Enter received OTP
+        Client->>API: 8. POST /auth/verify (Submit OTP)
+        API->>Firestore: 9. Verify OTP and expiration
+        API->>Firestore: 10. Delete used OTP
+        API->>FirebaseAuth: 11. Generate Custom Token
+        API-->>Client: 12. Return Custom Token
     
-    　Client->>Firebase SDK: 13. signInWithCustomToken()
-    　Firebase SDK-->>Client: 14. ログイン完了 (IDトークン取得)
+        Client->>Firebase SDK: 13. signInWithCustomToken()
+        Firebase SDK-->>Client: 14. Login completed (ID Token acquired)
     end
 ```
 
