@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"custom_auth_api/internal/infrastructure/emailsender"
 	"custom_auth_api/internal/infrastructure/persistence"
 	"custom_auth_api/internal/usecase"
 
@@ -34,7 +35,7 @@ func setupIntegrationTest(t *testing.T) *firestore.Client {
 	return client
 }
 
-func TestOTPService_Integration_GenerateAndSaveOTP(t *testing.T) {
+func TestOTPService_Integration_GenerateAndSendOTP(t *testing.T) {
 	client := setupIntegrationTest(t)
 	t.Cleanup(func() {
 		err := client.Close()
@@ -44,7 +45,8 @@ func TestOTPService_Integration_GenerateAndSaveOTP(t *testing.T) {
 	})
 
 	otpRepo := persistence.NewOTPRepository(client)
-	otpService := usecase.NewOTPService(otpRepo)
+	emailSender := emailsender.NewDummyEmailSender()
+	otpService := usecase.NewOTPService(otpRepo, emailSender)
 
 	ctx := context.Background()
 	testEmail := "integration-test@example.com"
@@ -57,10 +59,10 @@ func TestOTPService_Integration_GenerateAndSaveOTP(t *testing.T) {
 		}
 	})
 
-	t.Run("should generate and save OTP to Firestore", func(t *testing.T) {
-		generatedOTP, err := otpService.GenerateAndSaveOTP(ctx, testEmail)
+	t.Run("should generate, save, and send OTP", func(t *testing.T) {
+		generatedOTP, err := otpService.GenerateAndSendOTP(ctx, testEmail)
 		if err != nil {
-			t.Fatalf("GenerateAndSaveOTP failed: %v", err)
+			t.Fatalf("GenerateAndSendOTP failed: %v", err)
 		}
 
 		// Verify the OTP was saved correctly in Firestore
