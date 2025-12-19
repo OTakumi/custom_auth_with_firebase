@@ -4,15 +4,20 @@ import (
 	"log"
 	"net/http"
 
+	"custom_auth_api/internal/domain/vo/email"
+	"custom_auth_api/internal/usecase"
+
 	"github.com/gin-gonic/gin"
 )
 
 // AuthHandler handles authentication related requests.
-type AuthHandler struct{}
+type AuthHandler struct {
+	otpService *usecase.OTPService // Dependency on OTPService
+}
 
 // NewAuthHandler creates a new AuthHandler.
-func NewAuthHandler() *AuthHandler {
-	return &AuthHandler{}
+func NewAuthHandler(otpService *usecase.OTPService) *AuthHandler {
+	return &AuthHandler{otpService: otpService}
 }
 
 // RequestOTP is a handler for generating an OTP.
@@ -28,8 +33,25 @@ func (h *AuthHandler) RequestOTP(c *gin.Context) {
 		return
 	}
 
-	// For now, just log the email and return a success message.
-	log.Printf("Received email: %s", req.Email)
+	// Validate email format using the value object
+	_, err = email.NewEmail(req.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 
-	c.JSON(http.StatusOK, gin.H{"message": "OTP generation request received"})
+		return
+	}
+
+	// Generate OTP using the service
+	var otp string
+
+	otp, err = h.otpService.GenerateOTP(req.Email)
+	if err != nil {
+		log.Printf("Error generating OTP for %s: %v", req.Email, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate OTP"})
+
+		return
+	}
+
+	// For now, just return a success message. The OTP is logged by the service.
+	c.JSON(http.StatusOK, gin.H{"message": "OTP generation request received", "otp": otp})
 }
