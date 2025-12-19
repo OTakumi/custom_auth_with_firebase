@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	email "custom_auth_api/internal/domain/vo"
+	"custom_auth_api/internal/domain/vo/email"
 )
 
 func TestNewEmail(t *testing.T) {
