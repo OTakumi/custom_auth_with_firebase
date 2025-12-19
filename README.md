@@ -19,23 +19,32 @@ sequenceDiagram
     participant API
     participant Firestore@{ "type":"database" }
     participant EmailService
+    participant FirebaseAuth
 
-    User->>Client: 1. Enters email address
-    Client->>API: 2. POST /auth/otp
-    API->>API: 3. Generates 6-digit OTP
-    API->>Firestore: 4. Stores OTP with expiration
-    API->>EmailService: 5. Requests to send OTP email
-    EmailService-->>User: 6. Sends email with OTP
+    %% --- OTP発行依頼プロセス ---
+    rect rgb(128, 128, 128, 0.05)
+    　Note over User, EmailService: OTP発行依頼プロセス
+    　User->>Client: 1. メールアドレス入力
+    　Client->>API: 2. POST /auth/otp
+    　API->>API: 3. 6桁のOTP生成
+    　API->>Firestore: 4. OTPと有効期限を保存
+    　API->>EmailService: 5. メール送信依頼
+    　EmailService-->>User: 6. OTPコード通知
+    end
 
-    User->>Client: 7. Enters received OTP
-    Client->>API: 8. POST /auth/verify
-    API->>Firestore: 9. Verifies OTP and expiration
-    API->>API: 10. Deletes used OTP from Firestore
-    API->>Firebase Auth: 11. Creates Custom Token
-    API-->>Client: 12. Returns Custom Token
+    %% --- OTP入力・トークン発行プロセス ---
+    rect rgb(128, 128, 128, 0.05)
+    　Note over User, FirebaseAuth: OTP入力・トークン発行プロセス
+    　User->>Client: 7. 受信したOTPを入力
+    　Client->>API: 8. POST /auth/verify (OTP送信)
+    　API->>Firestore: 9. OTPの照合・有効期限確認
+    　API->>Firestore: 10. 使用済みOTPの削除
+    　API->>FirebaseAuth: 11. カスタムトークンの生成
+    　API-->>Client: 12. カスタムトークンを返却
     
-    Client->>Firebase SDK: 13. signInWithCustomToken()
-    Firebase SDK-->>Client: 14. User is signed in
+    　Client->>Firebase SDK: 13. signInWithCustomToken()
+    　Firebase SDK-->>Client: 14. ログイン完了 (IDトークン取得)
+    end
 ```
 
 ## Getting Started
