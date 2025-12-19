@@ -14,10 +14,10 @@ The service follows a layered architecture inspired by Clean Architecture princi
 
 ```mermaid
 sequenceDiagram
-    participant User
+    actor User
     participant Client
     participant API
-    participant Firestore
+    participant Firestore@{ "type":"database" }
     participant EmailService
 
     User->>Client: 1. Enters email address
