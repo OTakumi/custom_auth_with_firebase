@@ -30,6 +30,6 @@ linters:
         - 'gorm\.io/gorm/schema\.Schema$'
   exclusions:
     rules:
-      - path: 'internal/infrastructure/persistence/.*_integration_test\.go'
+      - path: 'tests/.*_integration_test\.go'
         linters:
           - paralleltest
