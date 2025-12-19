@@ -1,0 +1,14 @@
+---
+pre-commit:
+  jobs:
+    - name: build backend
+      glob: backend/**/*.go
+      root: backend
+      run: make build
+
+pre-push:
+  jobs:
+    - name: run backend unittests
+      glob: backend/**/*.go
+      root: backend
+      run: make test
