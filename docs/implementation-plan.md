@@ -7,9 +7,9 @@ This document outlines the phased approach for developing the Firebase custom au
 1.  **Setup Project Structure:** Organized the Go server project with a standard directory structure (`cmd`, `internal`).
 2.  **Create API Endpoint:** Implemented the initial API endpoint (`POST /auth/otp`) using the Gin framework to receive the user's email address.
 
-## Phase 2: OTP Generation and Delivery
+## Phase 2: OTP Generation and Delivery [In Progress]
 
-3.  **Implement OTP Generation Logic:** Implement the functionality to generate a 6-digit one-time password.
+3.  **Implement OTP Generation Logic:** Implemented the functionality to generate a 6-digit one-time password and log it to the console. [Completed]
 4.  **Cache OTP:** Implement the logic to store the generated OTP in a cache (e.g., Redis) with an expiration time.
 5.  **Implement Email Delivery:** Implement the functionality to send the OTP to the user's email address. This can be done using an external service like SendGrid.
 
@@ -23,4 +23,4 @@ This document outlines the phased approach for developing the Firebase custom au
 8.  **Create Frontend:** Implement a simple client with a UI for entering an email address and OTP.
 9.  **Implement API Integration and Firebase Sign-in:** Implement the logic on the client to call the API and use the received custom token to sign in with Firebase.
 
-The development will start with **Phase 2: OTP Generation and Delivery**.
+The development will continue with **Phase 2: Cache OTP**.
