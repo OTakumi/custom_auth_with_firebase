@@ -1,6 +1,6 @@
 #!/bin/bash
 
-API_URL="http://localhost:8080"
+API_URL="http://localhost:8000"
 
 echo "Testing /health endpoint..."
 curl -v ${API_URL}/health
