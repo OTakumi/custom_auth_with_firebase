@@ -20,10 +20,13 @@ func main() {
 	ctx := context.Background()
 
 	// Initialize Firebase and Firestore client
-	firestoreClient, err := firebase.NewClient(ctx)
+	firestoreClient, authClient, err := firebase.NewClient(ctx)
 	if err != nil {
 		log.Fatalf("Failed to initialize Firebase: %v", err)
 	}
+
+	// NOTE: Use authClient for other services
+	authService := usecase.NewAuthService(authClient)
 
 	// Initialize dependencies
 	otpRepo := persistence.NewOTPRepository(firestoreClient)
@@ -32,14 +35,15 @@ func main() {
 	// Initialize OTPService
 	otpService := usecase.NewOTPService(otpRepo, emailSender)
 
-	// Create the auth handler, injecting the OTPService
-	authHandler := handler.NewAuthHandler(otpService)
+	// Create the auth handler, injecting the OTPService and AuthService
+	authHandler := handler.NewAuthHandler(otpService, authService)
 
 	// Create a new Gin router
 	router := gin.Default()
 
 	// Register the routes
 	router.POST("/auth/otp", authHandler.RequestOTP)
+	router.POST("/auth/verify", authHandler.VerifyOTP)
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "OK",
