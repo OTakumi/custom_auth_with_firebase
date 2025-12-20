@@ -14,28 +14,39 @@ The service follows a layered architecture inspired by Clean Architecture princi
 
 ```mermaid
 sequenceDiagram
-    participant User
+    actor User
     participant Client
     participant API
-    participant Firestore
+    participant Firestore@{ "type":"database" }
     participant EmailService
+    participant FirebaseAuth
 
-    User->>Client: 1. Enters email address
-    Client->>API: 2. POST /auth/otp
-    API->>API: 3. Generates 6-digit OTP
-    API->>Firestore: 4. Stores OTP with expiration
-    API->>EmailService: 5. Requests to send OTP email
-    EmailService-->>User: 6. Sends email with OTP
+    %% --- OTP Request Process ---
+    rect rgb(128, 128, 128, 0.1)
+        Note over User, EmailService: OTP Request Process
+        User->>Client: 1. Enter email address
+        Client->>API: 2. POST /auth/otp
+        API->>API: 3. Generate 6-digit OTP
+        API->>Firestore: 4. Store OTP and expiration
+        API->>EmailService: 5. Request to send email
+        EmailService-->>User: 6. Notify OTP code via email
+    end
 
-    User->>Client: 7. Enters received OTP
-    Client->>API: 8. POST /auth/verify
-    API->>Firestore: 9. Verifies OTP and expiration
-    API->>API: 10. Deletes used OTP from Firestore
-    API->>Firebase Auth: 11. Creates Custom Token
-    API-->>Client: 12. Returns Custom Token
+    User->>Client: (Check email and copy code)
+
+    %% --- OTP Verification & Token Issuance Process ---
+    rect rgb(128, 128, 128, 0.1)
+        Note over User, FirebaseAuth: Verification & Token Issuance
+        User->>Client: 7. Enter received OTP
+        Client->>API: 8. POST /auth/verify (Submit OTP)
+        API->>Firestore: 9. Verify OTP and expiration
+        API->>Firestore: 10. Delete used OTP
+        API->>FirebaseAuth: 11. Generate Custom Token
+        API-->>Client: 12. Return Custom Token
     
-    Client->>Firebase SDK: 13. signInWithCustomToken()
-    Firebase SDK-->>Client: 14. User is signed in
+        Client->>Firebase SDK: 13. signInWithCustomToken()
+        Firebase SDK-->>Client: 14. Login completed (ID Token acquired)
+    end
 ```
 
 ## Getting Started
@@ -49,7 +60,7 @@ sequenceDiagram
 
 1.  **Clone the Repository:**
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/OTakumi/custom_auth_with_firebase.git
     cd custom_auth_with_firebase
     ```
 
