@@ -10,15 +10,15 @@ services:
       - "8080:8080"
       # Auth
       - "9099:9099"
-  # app:
-  #   build: ./server
-  #   depends_on:
-  #     - firebase
-  #   environment:
-  #     - FIRESTORE_EMULATOR_HOST=firebase:8080
-  #     - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
-  #     - GOOGLE_CLOUD_PROJECT=demo-project
-  #   ports:
-  #     - "8000:8000"
+  app:
+    build: ./server
+    depends_on:
+      - firebase
+    environment:
+      - FIRESTORE_EMULATOR_HOST=firebase:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+      - GOOGLE_CLOUD_PROJECT=demo-project
+    ports:
+      - "8000:8000"
 volumes:
   firebase_data:
