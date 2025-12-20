@@ -2,16 +2,18 @@ package usecase
 
 import (
 	"context"
-	"crypto/rand"
+	"errors"
 	"fmt"
-	"io"
 	"log"
 
 	"custom_auth_api/internal/domain/emailsender"
 	"custom_auth_api/internal/domain/repository"
+	"custom_auth_api/internal/domain/vo/otp"
 )
 
-const otpLength = 6
+var (
+	ErrInvalidOTP = errors.New("invalid OTP")
+)
 
 // OTPService handles OTP related business logic, such as generation, storage, and sending.
 type OTPService struct {
@@ -26,43 +28,41 @@ func NewOTPService(otpRepo repository.OTPRepository, emailSender emailsender.Ema
 
 // GenerateAndSendOTP generates a 6-digit one-time password, saves it to the repository, and sends it via email.
 func (s *OTPService) GenerateAndSendOTP(ctx context.Context, email string) (string, error) {
-	otp, err := generate6DigitCode()
+	newOtp, err := otp.NewOTP()
 	if err != nil {
 		return "", fmt.Errorf("failed to generate OTP: %w", err)
 	}
 
+	otpStr := newOtp.String()
+
 	// Save the OTP to the repository
-	err = s.otpRepo.Save(ctx, email, otp)
+	err = s.otpRepo.Save(ctx, email, otpStr)
 	if err != nil {
 		return "", fmt.Errorf("failed to save OTP: %w", err)
 	}
 
 	// Send the OTP via email
-	err = s.emailSender.SendOTP(ctx, email, otp)
+	err = s.emailSender.SendOTP(ctx, email, otpStr)
 	if err != nil {
 		return "", fmt.Errorf("failed to send OTP email: %w", err)
 	}
 
 	// For now, also log the OTP to the console for visibility (optional after email sending is fully implemented).
-	log.Printf("OTP for %s: %s (sent via email sender)", email, otp)
+	log.Printf("OTP for %s: %s (sent via email sender)", email, otpStr)
 
-	return otp, nil
+	return otpStr, nil
 }
 
-// generate6DigitCode generates a random 6-digit string.
-func generate6DigitCode() (string, error) {
-	table := [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
-
-	b := make([]byte, otpLength)
-
-	n, err := io.ReadAtLeast(rand.Reader, b, otpLength)
-	if n != otpLength {
-		return "", fmt.Errorf("failed to read enough random bytes: %w", err)
+// VerifyOTP validates the provided OTP against the stored one.
+func (s *OTPService) VerifyOTP(ctx context.Context, email, otp string) (bool, error) {
+	storedOTP, err := s.otpRepo.Find(ctx, email)
+	if err != nil {
+		return false, fmt.Errorf("failed to retrieve OTP for verification: %w", err)
 	}
 
-	for i := range b {
-		b[i] = table[int(b[i])%len(table)]
+	if storedOTP != otp {
+		return false, fmt.Errorf("%w for email: %s", ErrInvalidOTP, email)
 	}
 
-	return string(b), nil
+	return true, nil
 }
