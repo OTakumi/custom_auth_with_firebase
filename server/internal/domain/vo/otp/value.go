@@ -3,7 +3,7 @@ package otp
 import (
 	"crypto/rand"
 	"fmt"
-	"io"
+	"math/big"
 )
 
 const otpLength = 6
@@ -28,19 +28,17 @@ func (o *OTP) String() string {
 	return o.value
 }
 
-// generate6DigitCode generates a random 6-digit string.
+// generate6DigitCode generates a random 6-digit string without modulo bias.
+// Uses crypto/rand.Int for unbiased random number generation.
 func generate6DigitCode() (string, error) {
-	table := [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
-	b := make([]byte, otpLength)
+	// Generate a number between 0 and 999999 (inclusive)
+	max := big.NewInt(1000000) // 10^6 = 1,000,000
 
-	n, err := io.ReadAtLeast(rand.Reader, b, otpLength)
-	if n != otpLength {
-		return "", fmt.Errorf("failed to read enough random bytes: %w", err)
+	n, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate random OTP: %w", err)
 	}
 
-	for i := range b {
-		b[i] = table[int(b[i])%len(table)]
-	}
-
-	return string(b), nil
+	// Format as 6-digit string with leading zeros
+	return fmt.Sprintf("%06d", n.Int64()), nil
 }
