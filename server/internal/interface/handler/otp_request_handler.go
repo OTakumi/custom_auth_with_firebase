@@ -16,7 +16,7 @@ import (
 // - Handle POST /auth/otp endpoint
 // - Validate email format
 // - Check user existence before generating OTP
-// - Generate and send OTP to registered users
+// - Generate and send OTP to registered users.
 type OTPRequestHandler struct {
 	otpService  *usecase.OTPService
 	authService *usecase.AuthService

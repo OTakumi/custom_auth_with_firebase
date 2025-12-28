@@ -81,9 +81,13 @@ func main() {
 
 	// Rate limiting configuration
 	// 5 requests per minute per IP for authentication endpoints
-	rateLimiter := middleware.NewIPRateLimiter(rate.Every(time.Minute/5), 5)
+	const (
+		requestsPerMinute      = 5
+		cleanupIntervalMinutes = 10
+	)
+	rateLimiter := middleware.NewIPRateLimiter(rate.Every(time.Minute/requestsPerMinute), requestsPerMinute)
 	// Start cleanup routine to prevent memory leak
-	go rateLimiter.CleanupExpiredLimiters(10 * time.Minute)
+	go rateLimiter.CleanupExpiredLimiters(cleanupIntervalMinutes * time.Minute)
 
 	// Register the routes with rate limiting
 	authGroup := router.Group("/auth")
@@ -104,6 +108,6 @@ func main() {
 
 	err = router.Run(serverPort)
 	if err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+		log.Fatalf("Server failed to start: %v", err) //nolint:gocritic // log.Fatalf is intentional
 	}
 }

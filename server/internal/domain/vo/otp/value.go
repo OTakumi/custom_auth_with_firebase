@@ -6,8 +6,6 @@ import (
 	"math/big"
 )
 
-const otpLength = 6
-
 // OTP represents a one-time password value object.
 type OTP struct {
 	value string
@@ -31,10 +29,11 @@ func (o *OTP) String() string {
 // generate6DigitCode generates a random 6-digit string without modulo bias.
 // Uses crypto/rand.Int for unbiased random number generation.
 func generate6DigitCode() (string, error) {
+	const otpMaxValue = 1000000 // 10^6 = 1,000,000
 	// Generate a number between 0 and 999999 (inclusive)
-	max := big.NewInt(1000000) // 10^6 = 1,000,000
+	maxValue := big.NewInt(otpMaxValue)
 
-	n, err := rand.Int(rand.Reader, max)
+	n, err := rand.Int(rand.Reader, maxValue)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate random OTP: %w", err)
 	}

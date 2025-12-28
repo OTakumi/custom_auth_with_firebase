@@ -104,7 +104,7 @@ func (r *OTPRepository) IncrementAttempts(ctx context.Context, email string) err
 	docRef := r.client.Collection(otpCollection).Doc(email)
 
 	_, err := docRef.Update(ctx, []firestore.Update{
-		{Path: "attempts", Value: firestore.Increment(1)},
+		{Path: "attempts", Value: firestore.Increment(1)}, //nolint:exhaustruct // FieldPath is optional
 	})
 	if err != nil {
 		// If document doesn't exist, it's already been deleted or never existed

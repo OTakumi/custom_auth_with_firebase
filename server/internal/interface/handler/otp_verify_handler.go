@@ -16,7 +16,7 @@ import (
 // - Handle POST /auth/verify endpoint
 // - Validate email format
 // - Verify OTP against stored value
-// - Generate Firebase custom token for authenticated users
+// - Generate Firebase custom token for authenticated users.
 type OTPVerifyHandler struct {
 	otpService  *usecase.OTPService
 	authService *usecase.AuthService

@@ -42,7 +42,13 @@ func cleanupOTP(ctx context.Context, t *testing.T, client *firestore.Client, ema
 
 func TestOTPRepository_Save(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	ctx := context.Background()
@@ -133,7 +139,7 @@ func TestOTPRepository_Save(t *testing.T) {
 		email := "overwrite-test@example.com"
 
 		t.Cleanup(func() {
-			cleanupOTP(t, client, email)
+			cleanupOTP(ctx, t, client, email)
 		})
 
 		// Save initial OTP
@@ -176,7 +182,13 @@ func TestOTPRepository_Save(t *testing.T) {
 
 func TestOTPRepository_Find_Success(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	ctx := context.Background()
@@ -184,7 +196,7 @@ func TestOTPRepository_Find_Success(t *testing.T) {
 	expectedOTP := "123456"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, client, email)
+		cleanupOTP(ctx, t, client, email)
 	})
 
 	// Arrange: Save an OTP
@@ -221,7 +233,13 @@ func TestOTPRepository_Find_Success(t *testing.T) {
 
 func TestOTPRepository_Find_NotFound(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	ctx := context.Background()
@@ -246,13 +264,19 @@ func TestOTPRepository_Find_NotFound(t *testing.T) {
 
 func TestOTPRepository_Find_Expired(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	email := "expired@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, client, email)
+		cleanupOTP(ctx, t, client, email)
 	})
 
 	// Arrange: Manually create an expired OTP document
@@ -292,13 +316,19 @@ func TestOTPRepository_Find_Expired(t *testing.T) {
 
 func TestOTPRepository_Find_TooManyAttempts(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	ctx := context.Background()
 	email := "too-many-attempts@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, client, email)
+		cleanupOTP(ctx, t, client, email)
 	})
 
 	// Arrange: Create an OTP with too many attempts
@@ -338,7 +368,13 @@ func TestOTPRepository_Find_TooManyAttempts(t *testing.T) {
 
 func TestOTPRepository_IncrementAttempts(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	ctx := context.Background()
@@ -347,7 +383,7 @@ func TestOTPRepository_IncrementAttempts(t *testing.T) {
 		email := "increment-test@example.com"
 
 		t.Cleanup(func() {
-			cleanupOTP(t, client, email)
+			cleanupOTP(ctx, t, client, email)
 		})
 
 		// Arrange: Save an OTP
@@ -384,7 +420,7 @@ func TestOTPRepository_IncrementAttempts(t *testing.T) {
 		email := "multiple-increments@example.com"
 
 		t.Cleanup(func() {
-			cleanupOTP(t, client, email)
+			cleanupOTP(ctx, t, client, email)
 		})
 
 		// Arrange: Save an OTP
@@ -428,7 +464,13 @@ func TestOTPRepository_IncrementAttempts(t *testing.T) {
 
 func TestOTPRepository_Delete(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	ctx := context.Background()
@@ -437,7 +479,7 @@ func TestOTPRepository_Delete(t *testing.T) {
 		email := "delete-test@example.com"
 
 		t.Cleanup(func() {
-			cleanupOTP(t, client, email)
+			cleanupOTP(ctx, t, client, email)
 		})
 
 		// Arrange: Save an OTP
@@ -476,7 +518,13 @@ func TestOTPRepository_Delete(t *testing.T) {
 
 func TestOTPRepository_Concurrent_Operations(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	ctx := context.Background()
@@ -492,7 +540,7 @@ func TestOTPRepository_Concurrent_Operations(t *testing.T) {
 
 	// Clean up all test data first
 	for _, tt := range tests {
-		cleanupOTP(t, client, tt.email)
+		cleanupOTP(ctx, t, client, tt.email)
 	}
 
 	// Run operations sequentially to avoid client connection issues

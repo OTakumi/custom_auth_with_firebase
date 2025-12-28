@@ -33,7 +33,7 @@ var (
 //
 // Note:
 // - User existence validation is handled by AuthService
-// - Email format validation is handled at the handler layer
+// - Email format validation is handled at the handler layer.
 type OTPService struct {
 	otpRepo     repository.OTPRepository
 	emailSender emailsender.EmailSender

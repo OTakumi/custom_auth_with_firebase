@@ -32,10 +32,8 @@ func setupFirestoreEmulator(t *testing.T) *firestore.Client {
 }
 
 // cleanupOTP deletes the OTP document for the given email.
-func cleanupOTP(t *testing.T, client *firestore.Client, email string) {
+func cleanupOTP(ctx context.Context, t *testing.T, client *firestore.Client, email string) {
 	t.Helper()
-
-	ctx := context.Background()
 
 	_, err := client.Collection("otps").Doc(email).Delete(ctx)
 	if err != nil {
@@ -45,7 +43,13 @@ func cleanupOTP(t *testing.T, client *firestore.Client, email string) {
 
 func TestOTPService_GenerateAndSendOTP(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	sender := emailsender.NewDummyEmailSender()
@@ -78,7 +82,7 @@ func TestOTPService_GenerateAndSendOTP(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Cleanup(func() {
-				cleanupOTP(t, client, tt.email)
+				cleanupOTP(ctx, t, client, tt.email)
 			})
 
 			// Act: Generate and send OTP
@@ -147,7 +151,13 @@ func TestOTPService_GenerateAndSendOTP(t *testing.T) {
 
 func TestOTPService_VerifyOTP_Success(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	sender := emailsender.NewDummyEmailSender()
@@ -157,7 +167,7 @@ func TestOTPService_VerifyOTP_Success(t *testing.T) {
 	email := "verify-success@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, client, email)
+		cleanupOTP(ctx, t, client, email)
 	})
 
 	// Arrange: Generate an OTP
@@ -187,7 +197,13 @@ func TestOTPService_VerifyOTP_Success(t *testing.T) {
 
 func TestOTPService_VerifyOTP_InvalidOTP(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	sender := emailsender.NewDummyEmailSender()
@@ -197,7 +213,7 @@ func TestOTPService_VerifyOTP_InvalidOTP(t *testing.T) {
 	email := "verify-invalid@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, client, email)
+		cleanupOTP(ctx, t, client, email)
 	})
 
 	// Arrange: Generate an OTP
@@ -245,7 +261,13 @@ func TestOTPService_VerifyOTP_InvalidOTP(t *testing.T) {
 
 func TestOTPService_VerifyOTP_ExpiredOTP(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	sender := emailsender.NewDummyEmailSender()
@@ -255,7 +277,7 @@ func TestOTPService_VerifyOTP_ExpiredOTP(t *testing.T) {
 	email := "verify-expired@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, client, email)
+		cleanupOTP(ctx, t, client, email)
 	})
 
 	// Arrange: Manually create an expired OTP
@@ -290,7 +312,13 @@ func TestOTPService_VerifyOTP_ExpiredOTP(t *testing.T) {
 
 func TestOTPService_VerifyOTP_TooManyAttempts(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	sender := emailsender.NewDummyEmailSender()
@@ -300,7 +328,7 @@ func TestOTPService_VerifyOTP_TooManyAttempts(t *testing.T) {
 	email := "verify-too-many@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, client, email)
+		cleanupOTP(ctx, t, client, email)
 	})
 
 	// Arrange: Create an OTP with max attempts
@@ -334,7 +362,13 @@ func TestOTPService_VerifyOTP_TooManyAttempts(t *testing.T) {
 
 func TestOTPService_VerifyOTP_NotFound(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	sender := emailsender.NewDummyEmailSender()
@@ -362,7 +396,13 @@ func TestOTPService_VerifyOTP_NotFound(t *testing.T) {
 
 func TestOTPService_VerifyOTP_MultipleFailedAttempts(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	sender := emailsender.NewDummyEmailSender()
@@ -372,7 +412,7 @@ func TestOTPService_VerifyOTP_MultipleFailedAttempts(t *testing.T) {
 	email := "multiple-attempts@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, client, email)
+		cleanupOTP(ctx, t, client, email)
 	})
 
 	// Arrange: Generate an OTP
@@ -446,7 +486,13 @@ func TestOTPService_VerifyOTP_MultipleFailedAttempts(t *testing.T) {
 
 func TestOTPService_VerifyOTP_SuccessAfterFailedAttempt(t *testing.T) {
 	client := setupFirestoreEmulator(t)
-	defer client.Close()
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	repo := persistence.NewOTPRepository(client)
 	sender := emailsender.NewDummyEmailSender()
@@ -456,7 +502,7 @@ func TestOTPService_VerifyOTP_SuccessAfterFailedAttempt(t *testing.T) {
 	email := "success-after-fail@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, client, email)
+		cleanupOTP(ctx, t, client, email)
 	})
 
 	// Arrange: Generate an OTP

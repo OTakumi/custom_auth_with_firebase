@@ -15,7 +15,7 @@ import (
 //
 // Note:
 // - OTP generation, sending, and verification are handled by OTPService
-// - This service acts as a wrapper around the Firebase Auth SDK
+// - This service acts as a wrapper around the Firebase Auth SDK.
 type AuthService struct {
 	authClient *auth.Client
 }

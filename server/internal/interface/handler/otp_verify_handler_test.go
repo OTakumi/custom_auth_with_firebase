@@ -16,17 +16,23 @@ import (
 
 func TestOTPVerifyHandler_VerifyOTP_Success(t *testing.T) {
 	firestoreClient, authClient, _, otpVerifyHandler, ctx := setupTestEnvironment(t)
-	defer firestoreClient.Close()
+
+	defer func() {
+		err := firestoreClient.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	email := "verify-otp-success@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, firestoreClient, email)
-		cleanupUser(t, authClient, email)
+		cleanupOTP(ctx, t, firestoreClient, email)
+		cleanupUser(ctx, t, authClient, email)
 	})
 
 	// Arrange: Create test user
-	createTestUser(t, authClient, email, "password123")
+	createTestUser(t, authClient, email)
 
 	// Generate OTP
 	otpRepo := persistence.NewOTPRepository(firestoreClient)
@@ -43,7 +49,11 @@ func TestOTPVerifyHandler_VerifyOTP_Success(t *testing.T) {
 		"email": email,
 		"otp":   generatedOTP,
 	}
-	jsonBody, _ := json.Marshal(reqBody)
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		t.Fatalf("Failed to marshal request body: %v", err)
+	}
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/verify", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -75,7 +85,7 @@ func TestOTPVerifyHandler_VerifyOTP_Success(t *testing.T) {
 }
 
 func TestOTPVerifyHandler_VerifyOTP_InvalidJSON(t *testing.T) {
-	_, _, _, otpVerifyHandler, _ := setupTestEnvironment(t)
+	_, _, _, otpVerifyHandler, _ := setupTestEnvironment(t) //nolint:dogsled // Only need otpVerifyHandler for this test
 
 	// Create request with invalid JSON
 	req, _ := http.NewRequest(http.MethodPost, "/auth/verify", bytes.NewBufferString("invalid json"))
@@ -98,14 +108,18 @@ func TestOTPVerifyHandler_VerifyOTP_InvalidJSON(t *testing.T) {
 }
 
 func TestOTPVerifyHandler_VerifyOTP_InvalidEmail(t *testing.T) {
-	_, _, _, otpVerifyHandler, _ := setupTestEnvironment(t)
+	_, _, _, otpVerifyHandler, _ := setupTestEnvironment(t) //nolint:dogsled // Only need otpVerifyHandler for this test
 
 	// Create request with invalid email
 	reqBody := map[string]string{
 		"email": "invalid-email",
 		"otp":   "123456",
 	}
-	jsonBody, _ := json.Marshal(reqBody)
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		t.Fatalf("Failed to marshal request body: %v", err)
+	}
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/verify", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -128,17 +142,23 @@ func TestOTPVerifyHandler_VerifyOTP_InvalidEmail(t *testing.T) {
 
 func TestOTPVerifyHandler_VerifyOTP_InvalidOTP(t *testing.T) {
 	firestoreClient, authClient, _, otpVerifyHandler, ctx := setupTestEnvironment(t)
-	defer firestoreClient.Close()
+
+	defer func() {
+		err := firestoreClient.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	email := "verify-otp-invalid@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, firestoreClient, email)
-		cleanupUser(t, authClient, email)
+		cleanupOTP(ctx, t, firestoreClient, email)
+		cleanupUser(ctx, t, authClient, email)
 	})
 
 	// Arrange: Create test user and generate OTP
-	createTestUser(t, authClient, email, "password123")
+	createTestUser(t, authClient, email)
 
 	otpRepo := persistence.NewOTPRepository(firestoreClient)
 	emailSender := emailsender.NewDummyEmailSender()
@@ -154,7 +174,11 @@ func TestOTPVerifyHandler_VerifyOTP_InvalidOTP(t *testing.T) {
 		"email": email,
 		"otp":   "999999",
 	}
-	jsonBody, _ := json.Marshal(reqBody)
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		t.Fatalf("Failed to marshal request body: %v", err)
+	}
 
 	req, _ := http.NewRequest(http.MethodPost, "/auth/verify", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -175,7 +199,9 @@ func TestOTPVerifyHandler_VerifyOTP_InvalidOTP(t *testing.T) {
 	}
 
 	var response map[string]any
-	json.Unmarshal(w.Body.Bytes(), &response)
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	if response["error"] != "Invalid or expired OTP" {
 		t.Errorf("Expected 'Invalid or expired OTP' error, got %v", response["error"])
@@ -184,17 +210,23 @@ func TestOTPVerifyHandler_VerifyOTP_InvalidOTP(t *testing.T) {
 
 func TestOTPVerifyHandler_VerifyOTP_ExpiredOTP(t *testing.T) {
 	firestoreClient, authClient, _, otpVerifyHandler, ctx := setupTestEnvironment(t)
-	defer firestoreClient.Close()
+
+	defer func() {
+		err := firestoreClient.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	email := "verify-otp-expired@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, firestoreClient, email)
-		cleanupUser(t, authClient, email)
+		cleanupOTP(ctx, t, firestoreClient, email)
+		cleanupUser(ctx, t, authClient, email)
 	})
 
 	// Arrange: Create test user
-	createTestUser(t, authClient, email, "password123")
+	createTestUser(t, authClient, email)
 
 	// Manually create an expired OTP
 	_, err := firestoreClient.Collection("otps").Doc(email).Set(ctx, map[string]any{
@@ -234,12 +266,18 @@ func TestOTPVerifyHandler_VerifyOTP_ExpiredOTP(t *testing.T) {
 
 func TestOTPVerifyHandler_VerifyOTP_UserNotFound(t *testing.T) {
 	firestoreClient, _, _, otpVerifyHandler, ctx := setupTestEnvironment(t)
-	defer firestoreClient.Close()
+
+	defer func() {
+		err := firestoreClient.Close()
+		if err != nil {
+			t.Logf("Failed to close Firestore client: %v", err)
+		}
+	}()
 
 	email := "verify-user-not-found@example.com"
 
 	t.Cleanup(func() {
-		cleanupOTP(t, firestoreClient, email)
+		cleanupOTP(ctx, t, firestoreClient, email)
 	})
 
 	// Arrange: Create OTP but no user
@@ -276,7 +314,9 @@ func TestOTPVerifyHandler_VerifyOTP_UserNotFound(t *testing.T) {
 	}
 
 	var response map[string]any
-	json.Unmarshal(w.Body.Bytes(), &response)
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	// Should use generic error message
 	if response["error"] != "Authentication failed" {
