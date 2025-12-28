@@ -15,7 +15,25 @@ var (
 	ErrInvalidOTP = errors.New("invalid OTP")
 )
 
-// OTPService handles OTP related business logic, such as generation, storage, and sending.
+// OTPService handles OTP (One-Time Password) related business logic.
+//
+// Responsibilities:
+// - Generate cryptographically secure 6-digit OTP codes
+// - Store OTP with 5-minute expiration in the repository
+// - Send OTP to users via email sender
+// - Verify OTP against stored value
+// - Track failed verification attempts (max 3 attempts)
+// - Delete OTP after successful verification (one-time use)
+//
+// Security Features:
+// - Attempt limiting: Maximum 3 failed verification attempts
+// - Time-based expiration: OTP valid for 5 minutes
+// - One-time use: OTP deleted after successful verification
+// - Secure random generation: Uses crypto/rand without modulo bias
+//
+// Note:
+// - User existence validation is handled by AuthService
+// - Email format validation is handled at the handler layer
 type OTPService struct {
 	otpRepo     repository.OTPRepository
 	emailSender emailsender.EmailSender
@@ -47,9 +65,6 @@ func (s *OTPService) GenerateAndSendOTP(ctx context.Context, email string) (stri
 		return "", fmt.Errorf("failed to send OTP email: %w", err)
 	}
 
-	// For now, also log the OTP to the console for visibility (optional after email sending is fully implemented).
-	log.Printf("OTP for %s: %s (sent via email sender)", email, otpStr)
-
 	return otpStr, nil
 }
 
@@ -61,7 +76,19 @@ func (s *OTPService) VerifyOTP(ctx context.Context, email, otp string) (bool, er
 	}
 
 	if storedOTP != otp {
+		// Increment failed attempts counter
+		incrementErr := s.otpRepo.IncrementAttempts(ctx, email)
+		if incrementErr != nil {
+			log.Printf("Warning: failed to increment OTP attempts for %s: %v", email, incrementErr)
+		}
+
 		return false, fmt.Errorf("%w for email: %s", ErrInvalidOTP, email)
+	}
+
+	// Delete OTP after successful verification (one-time use)
+	deleteErr := s.otpRepo.Delete(ctx, email)
+	if deleteErr != nil {
+		log.Printf("Warning: failed to delete OTP for %s: %v", email, deleteErr)
 	}
 
 	return true, nil
