@@ -65,10 +65,12 @@ func (r *OTPRepository) Find(ctx context.Context, email string) (string, error) 
 		if status.Code(err) == codes.NotFound {
 			return "", fmt.Errorf("%w for email: %s", ErrOTPNotFound, email)
 		}
+
 		return "", fmt.Errorf("failed to get otp from firestore: %w", err)
 	}
 
 	var otpDoc otpDocument
+
 	err = docSnap.DataTo(&otpDoc)
 	if err != nil {
 		return "", fmt.Errorf("failed to unmarshal otp document: %w", err)
@@ -109,6 +111,7 @@ func (r *OTPRepository) IncrementAttempts(ctx context.Context, email string) err
 		if status.Code(err) == codes.NotFound {
 			return nil
 		}
+
 		return fmt.Errorf("failed to increment attempts: %w", err)
 	}
 
