@@ -6,4 +6,6 @@ import "context"
 type OTPRepository interface {
 	Save(ctx context.Context, email, otp string) error
 	Find(ctx context.Context, email string) (string, error)
+	Delete(ctx context.Context, email string) error
+	IncrementAttempts(ctx context.Context, email string) error
 }
