@@ -31,10 +31,8 @@ func setupFirestoreEmulator(t *testing.T) *firestore.Client {
 }
 
 // cleanupOTP deletes the OTP document for the given email.
-func cleanupOTP(t *testing.T, client *firestore.Client, email string) {
+func cleanupOTP(ctx context.Context, t *testing.T, client *firestore.Client, email string) {
 	t.Helper()
-
-	ctx := context.Background()
 
 	_, err := client.Collection("otps").Doc(email).Delete(ctx)
 	if err != nil {
@@ -78,7 +76,7 @@ func TestOTPRepository_Save(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Cleanup(func() {
-				cleanupOTP(t, client, tt.email)
+				cleanupOTP(ctx, t, client, tt.email)
 			})
 
 			// Arrange & Act
@@ -501,7 +499,7 @@ func TestOTPRepository_Concurrent_Operations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Cleanup(func() {
-				cleanupOTP(t, client, tt.email)
+				cleanupOTP(ctx, t, client, tt.email)
 			})
 
 			// Save and find OTP
