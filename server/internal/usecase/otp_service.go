@@ -26,7 +26,7 @@ import (
 //
 // Note:
 // - User existence validation is handled by AuthService
-// - Email format validation is handled by email value object
+// - Email format validation is handled by email value object.
 type OTPService struct {
 	sessionRepo repository.OTPSessionRepository
 	emailSender emailsender.EmailSender
@@ -102,7 +102,7 @@ func (s *OTPService) VerifyOTP(ctx context.Context, emailAddr, inputCode string)
 			return false, fmt.Errorf("verification failed (%w) and save failed: %w", err, saveErr)
 		}
 
-		return false, err
+		return false, fmt.Errorf("OTP verification failed: %w", err)
 	}
 
 	// Successful verification - delete session (one-time use)
