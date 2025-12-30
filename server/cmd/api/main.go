@@ -54,7 +54,8 @@ func main() {
 	serverAddr := ":" + env.Port
 	log.Printf("Server starting on port %s (environment: %s)", serverAddr, env.Environment)
 
-	if err := r.Run(serverAddr); err != nil {
+	err = r.Run(serverAddr)
+	if err != nil {
 		log.Fatalf("Server failed to start: %v", err) //nolint:gocritic // log.Fatalf is intentional
 	}
 }
