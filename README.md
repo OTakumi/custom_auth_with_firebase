@@ -1,101 +1,172 @@
 # Custom Authentication with Firebase
 
-A backend service for a passwordless, one-time password (OTP) custom authentication flow using Go and Firebase.
+Passwordless OTP authentication system using Vue 3, Go, and Firebase. Full-stack monorepo with secure, user-friendly authentication flow.
 
 ## Overview
 
-This project provides a secure and user-friendly alternative to traditional password-based logins. Instead of managing passwords, users receive a short-lived OTP to their email address, which they use to sign in. The backend is built with Go, using the Gin framework for the API and Firebase for custom token generation and OTP storage.
+This project replaces traditional password-based authentication with a 6-digit OTP code sent via email, providing a more secure and user-friendly login experience.
 
-## Architecture
+### Key Features
 
-The service follows a layered architecture inspired by Clean Architecture principles, separating concerns into domain, usecase, infrastructure, and interface layers.
+- **Passwordless Authentication**: OTP-based login flow
+- **Firebase Integration**: Authentication + Firestore
+- **Development-Ready**: Firebase Emulator support with Docker Compose
+- **Comprehensive Security**: Rate limiting, timing attack prevention, attempt restrictions
 
-### Authentication Flow
+## Tech Stack
+
+**Frontend** ([client_demo/](./client_demo/)):
+
+- Vue 3.5 + TypeScript 5.9
+- Vite 7.3, Vue Router 4
+- Tailwind CSS 4.1 + DaisyUI 5.5
+- Firebase SDK 12.7
+
+**Backend** ([server/](./server/)):
+
+- Go 1.25.5, Gin 1.11
+- Firebase Admin SDK v4.18
+
+**Infrastructure**:
+
+- Docker + Docker Compose
+- Firebase Emulator Suite
+
+## Quick Start
+
+### Prerequisites
+
+- Go 1.21+
+- Node.js 18+, pnpm
+- Docker & Docker Compose
+
+### Setup
+
+**1. Clone repository:**
+
+```bash
+git clone https://github.com/OTakumi/custom_auth_with_firebase.git
+cd custom_auth_with_firebase
+```
+
+**2. Start Firebase Emulator:**
+
+```bash
+docker compose up -d
+```
+
+Access: Emulator UI at <http://localhost:4000>
+
+**3. Start backend:**
+
+```bash
+cd server
+GOOGLE_CLOUD_PROJECT=demo-project \
+FIRESTORE_EMULATOR_HOST=localhost:8080 \
+FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 \
+go run ./cmd/api/main.go
+```
+
+API: <http://localhost:8000>
+
+**4. Start frontend:**
+
+```bash
+cd client_demo
+cp .env.example .env.local
+# Edit .env.local with required variables (see client_demo/README.md)
+pnpm install
+pnpm dev
+```
+
+Client: <http://localhost:5173>
+
+### Verify Setup
+
+1. Open <http://localhost:5173>
+2. Create account (signup mode)
+3. Logout, switch to login mode
+4. Enter email → request OTP
+5. Check server console for OTP code
+6. Enter OTP → redirect to dashboard
+
+## Authentication Flow
 
 ```mermaid
 sequenceDiagram
     actor User
-    participant Client
-    participant API
-    participant Firestore@{ "type":"database" }
-    participant EmailService
+    participant Client as Vue Client
+    participant API as Go API
+    participant Firestore
     participant FirebaseAuth
 
-    %% --- OTP Request Process ---
-    rect rgb(128, 128, 128, 0.1)
-        Note over User, EmailService: OTP Request Process
-        User->>Client: 1. Enter email address
-        Client->>API: 2. POST /auth/otp
-        API->>API: 3. Generate 6-digit OTP
-        API->>Firestore: 4. Store OTP and expiration
-        API->>EmailService: 5. Request to send email
-        EmailService-->>User: 6. Notify OTP code via email
-    end
+    User->>Client: 1. Enter email
+    Client->>API: 2. POST /auth/otp
+    API->>API: 3. Validate & generate OTP
+    API->>Firestore: 4. Store session (5min TTL)
+    API-->>User: 5. Send OTP email
 
-    User->>Client: (Check email and copy code)
-
-    %% --- OTP Verification & Token Issuance Process ---
-    rect rgb(128, 128, 128, 0.1)
-        Note over User, FirebaseAuth: Verification & Token Issuance
-        User->>Client: 7. Enter received OTP
-        Client->>API: 8. POST /auth/verify (Submit OTP)
-        API->>Firestore: 9. Verify OTP and expiration
-        API->>Firestore: 10. Delete used OTP
-        API->>FirebaseAuth: 11. Generate Custom Token
-        API-->>Client: 12. Return Custom Token
-    
-        Client->>Firebase SDK: 13. signInWithCustomToken()
-        Firebase SDK-->>Client: 14. Login completed (ID Token acquired)
-    end
+    User->>Client: 6. Enter OTP
+    Client->>API: 7. POST /auth/verify
+    API->>Firestore: 8. Verify OTP
+    API->>FirebaseAuth: 9. Generate custom token
+    API-->>Client: 10. Return token
+    Client->>Firebase SDK: 11. signInWithCustomToken()
+    Client->>Client: 12. Redirect to dashboard
 ```
 
-## Getting Started
+**OTP Session**:
 
-### Prerequisites
+- Expiration: 5 minutes
+- Max attempts: 3
+- Format: 6-digit number
+- Security: Constant-time comparison, IP hashing
 
--   Go (version 1.21 or later)
--   Docker and Docker Compose
+## Project Structure
 
-### Setup & Running
-
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/OTakumi/custom_auth_with_firebase.git
-    cd custom_auth_with_firebase
-    ```
-
-2.  **Start Firebase Emulator:**
-    This project is configured to work with the Firebase Emulator Suite. A `compose.yaml` is provided to run the emulators in Docker.
-    ```bash
-    docker compose up -d
-    ```
-    This will start the Firebase Emulator, including Firestore, Auth, and the Emulator UI.
-    -   Emulator UI: `http://localhost:4000`
-    -   Firestore Emulator: `localhost:8080`
-    -   Auth Emulator: `localhost:9099`
-
-3.  **Run the Application:**
-    In the `server` directory, run the API server. You need to set the required environment variables.
-
-    ```bash
-    cd server
-    GOOGLE_CLOUD_PROJECT=demo-project FIRESTORE_EMULATOR_HOST=localhost:8080 go run ./cmd/api/main.go
-    ```
-    The API server will start on `http://localhost:8000`.
-
-### Running Tests
-
-To run the integration tests, ensure the Firebase Emulator is running and execute the following command in the `server` directory:
-
-```bash
-FIRESTORE_EMULATOR_HOST=localhost:8080 go test -v ./tests/...
 ```
+custom_auth_with_firebase/
+├── client_demo/              # Vue 3 frontend
+│   ├── src/
+│   │   ├── components/auth/  # UI components
+│   │   ├── composables/      # useAuthApi
+│   │   ├── config/           # Firebase, API config
+│   │   ├── pages/            # Login, Dashboard
+│   │   └── router/           # Auth guards
+│   └── README.md
+│
+├── server/                   # Go backend
+│   ├── cmd/api/              # Entry point
+│   ├── internal/
+│   │   ├── domain/           # Entities, VOs
+│   │   ├── usecase/          # Business logic
+│   │   ├── infrastructure/   # Firebase, Firestore
+│   │   └── interface/        # Handlers, middleware
+│   └── README.md
+│
+├── firebase_emulator/        # Emulator config
+├── docs/                     # Documentation
+└── compose.yaml              # Docker Compose
+```
+
+See detailed documentation:
+
+- [Frontend README](./client_demo/README.md)
+- [Backend README](./server/README.md)
 
 ## API Endpoints
 
-| Method | Endpoint         | Description                                        |
-|--------|------------------|----------------------------------------------------|
-| `GET`  | `/health`        | Checks the health of the API server.               |
-| `POST` | `/auth/otp`      | Requests an OTP to be generated and sent to an email. |
-| `POST` | `/auth/verify`   | (To be implemented) Verifies an OTP and returns a custom token. |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Health check |
+| `POST` | `/auth/otp` | Request OTP |
+| `POST` | `/auth/verify` | Verify OTP, get token |
 
+## Security
+
+- **Timing Attack Prevention**: Constant-time OTP comparison
+- **Email Enumeration Prevention**: Generic error messages
+- **Brute Force Prevention**: 3 attempts + rate limiting (5 req/min)
+- **OTP Security**: Secure random generation, 5-min expiration
+- **IP Privacy**: SHA-256 hashing (GDPR compliant)
+- **CORS**: Environment-based whitelist
