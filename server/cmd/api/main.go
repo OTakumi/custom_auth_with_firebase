@@ -29,7 +29,8 @@ func main() {
 	}
 	// Ensure Firestore client is properly closed on shutdown
 	defer func() {
-		if err := firestoreClient.Close(); err != nil {
+		err := firestoreClient.Close()
+		if err != nil {
 			log.Printf("Error closing Firestore client: %v", err)
 		}
 	}()
