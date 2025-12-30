@@ -62,6 +62,7 @@ func NewOTPSessionWithContext(
 	session := NewOTPSession(userEmail, otpCode)
 	session.ipAddressHash = ipaddress.NewHash(ipAddress)
 	session.userAgent = userAgent
+
 	return session
 }
 
@@ -75,7 +76,8 @@ func NewOTPSessionWithContext(
 // Automatically increments the attempts counter on mismatch.
 func (s *OTPSession) Verify(inputCode string) error {
 	// Check if session is eligible for verification
-	if err := s.CanVerify(); err != nil {
+	err := s.CanVerify()
+	if err != nil {
 		return err
 	}
 
@@ -86,12 +88,14 @@ func (s *OTPSession) Verify(inputCode string) error {
 	// Check length first (constant-time compare requires same length)
 	if len(expected) != len(actual) {
 		s.attempts++
+
 		return ErrInvalidOTP
 	}
 
 	// Constant-time comparison
 	if subtle.ConstantTimeCompare(expected, actual) != 1 {
 		s.attempts++
+
 		return ErrInvalidOTP
 	}
 

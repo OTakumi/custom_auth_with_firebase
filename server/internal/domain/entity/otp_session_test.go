@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -259,7 +260,7 @@ func TestVerify_Failure(t *testing.T) {
 		err := session.Verify("654321")
 
 		// Assert
-		if err != ErrInvalidOTP {
+		if !errors.Is(err, ErrInvalidOTP) {
 			t.Errorf("expected ErrInvalidOTP, got %v", err)
 		}
 	})
@@ -306,7 +307,7 @@ func TestVerify_Failure(t *testing.T) {
 		err := session.Verify("123456") // Even correct code should fail
 
 		// Assert
-		if err != ErrTooManyAttempts {
+		if !errors.Is(err, ErrTooManyAttempts) {
 			t.Errorf("expected ErrTooManyAttempts, got %v", err)
 		}
 	})
@@ -350,7 +351,7 @@ func TestCanVerify(t *testing.T) {
 		err := session.CanVerify()
 
 		// Assert
-		if err != ErrTooManyAttempts {
+		if !errors.Is(err, ErrTooManyAttempts) {
 			t.Errorf("expected ErrTooManyAttempts, got %v", err)
 		}
 	})
