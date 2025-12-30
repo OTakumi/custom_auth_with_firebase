@@ -8,7 +8,13 @@ import { FirebaseError } from "firebase/app";
 const router = useRouter();
 
 const user = computed(() => auth.currentUser);
-const userEmail = computed(() => user.value?.email || "ゲスト");
+const userEmail = computed(() => {
+  if (!user.value?.email) {
+    console.error("User email not found. Authentication state is invalid.");
+    throw new Error("User email not found");
+  }
+  return user.value.email;
+});
 const logoutError = ref("");
 
 const handleLogout = async () => {
