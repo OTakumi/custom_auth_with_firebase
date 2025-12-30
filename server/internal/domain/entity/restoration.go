@@ -9,6 +9,16 @@ import (
 	"custom_auth_api/internal/domain/vo/otp"
 )
 
+// Restoration validation errors.
+var (
+	ErrEmailRequired         = errors.New("email is required for restoration")
+	ErrOTPCodeRequired       = errors.New("otp code is required for restoration")
+	ErrNegativeAttempts      = errors.New("attempts cannot be negative")
+	ErrCreatedAtRequired     = errors.New("createdAt is required for restoration")
+	ErrExpiresAtRequired     = errors.New("expiresAt is required for restoration")
+	ErrIPAddressHashRequired = errors.New("ipAddressHash is required for restoration (use NewEmptyHash if no IP)")
+)
+
 // RestorationData contains all fields needed to restore a persisted OTPSession.
 // This type is designed to be used exclusively by repository implementations
 // when reconstructing sessions from persistent storage.
@@ -46,22 +56,22 @@ func NewRestorationData(
 	userAgent string,
 ) (*RestorationData, error) {
 	if userEmail == nil {
-		return nil, errors.New("email is required for restoration")
+		return nil, ErrEmailRequired
 	}
 	if otpCode == nil {
-		return nil, errors.New("otp code is required for restoration")
+		return nil, ErrOTPCodeRequired
 	}
 	if attempts < 0 {
-		return nil, errors.New("attempts cannot be negative")
+		return nil, ErrNegativeAttempts
 	}
 	if createdAt.IsZero() {
-		return nil, errors.New("createdAt is required for restoration")
+		return nil, ErrCreatedAtRequired
 	}
 	if expiresAt.IsZero() {
-		return nil, errors.New("expiresAt is required for restoration")
+		return nil, ErrExpiresAtRequired
 	}
 	if ipHash == nil {
-		return nil, errors.New("ipAddressHash is required for restoration (use NewEmptyHash if no IP)")
+		return nil, ErrIPAddressHashRequired
 	}
 
 	return &RestorationData{
