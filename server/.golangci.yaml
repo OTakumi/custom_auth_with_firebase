@@ -35,6 +35,7 @@ linters:
       - path: '_test\.go$'
         linters:
           - paralleltest
+          - tparallel
           - cyclop
           - gocognit
           - noctx
