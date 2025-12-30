@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"custom_auth_api/internal/domain/entity"
 	"custom_auth_api/internal/infrastructure/emailsender"
 	"custom_auth_api/internal/infrastructure/persistence"
 	"custom_auth_api/internal/usecase"
@@ -51,7 +52,7 @@ func TestOTPService_GenerateAndSendOTP(t *testing.T) {
 		}
 	}()
 
-	repo := persistence.NewOTPRepository(client)
+	repo := persistence.NewOTPSessionRepository(client)
 	sender := emailsender.NewDummyEmailSender()
 	service := usecase.NewOTPService(repo, sender)
 
@@ -159,7 +160,7 @@ func TestOTPService_VerifyOTP_Success(t *testing.T) {
 		}
 	}()
 
-	repo := persistence.NewOTPRepository(client)
+	repo := persistence.NewOTPSessionRepository(client)
 	sender := emailsender.NewDummyEmailSender()
 	service := usecase.NewOTPService(repo, sender)
 
@@ -205,7 +206,7 @@ func TestOTPService_VerifyOTP_InvalidOTP(t *testing.T) {
 		}
 	}()
 
-	repo := persistence.NewOTPRepository(client)
+	repo := persistence.NewOTPSessionRepository(client)
 	sender := emailsender.NewDummyEmailSender()
 	service := usecase.NewOTPService(repo, sender)
 
@@ -235,7 +236,7 @@ func TestOTPService_VerifyOTP_InvalidOTP(t *testing.T) {
 		t.Error("VerifyOTP() expected error for invalid OTP, got nil")
 	}
 
-	if !errors.Is(err, usecase.ErrInvalidOTP) {
+	if !errors.Is(err, entity.ErrInvalidOTP) {
 		t.Errorf("VerifyOTP() expected ErrInvalidOTP, got %v", err)
 	}
 
@@ -269,7 +270,7 @@ func TestOTPService_VerifyOTP_ExpiredOTP(t *testing.T) {
 		}
 	}()
 
-	repo := persistence.NewOTPRepository(client)
+	repo := persistence.NewOTPSessionRepository(client)
 	sender := emailsender.NewDummyEmailSender()
 	service := usecase.NewOTPService(repo, sender)
 
@@ -301,7 +302,7 @@ func TestOTPService_VerifyOTP_ExpiredOTP(t *testing.T) {
 	}
 
 	// The error should be from the repository layer (ErrOTPExpired)
-	if !errors.Is(err, persistence.ErrOTPExpired) {
+	if !errors.Is(err, entity.ErrSessionExpired) {
 		t.Errorf("VerifyOTP() expected error containing ErrOTPExpired, got %v", err)
 	}
 
@@ -320,7 +321,7 @@ func TestOTPService_VerifyOTP_TooManyAttempts(t *testing.T) {
 		}
 	}()
 
-	repo := persistence.NewOTPRepository(client)
+	repo := persistence.NewOTPSessionRepository(client)
 	sender := emailsender.NewDummyEmailSender()
 	service := usecase.NewOTPService(repo, sender)
 
@@ -351,7 +352,7 @@ func TestOTPService_VerifyOTP_TooManyAttempts(t *testing.T) {
 		t.Error("VerifyOTP() expected error for too many attempts, got nil")
 	}
 
-	if !errors.Is(err, persistence.ErrTooManyAttempts) {
+	if !errors.Is(err, entity.ErrTooManyAttempts) {
 		t.Errorf("VerifyOTP() expected error containing ErrTooManyAttempts, got %v", err)
 	}
 
@@ -370,7 +371,7 @@ func TestOTPService_VerifyOTP_NotFound(t *testing.T) {
 		}
 	}()
 
-	repo := persistence.NewOTPRepository(client)
+	repo := persistence.NewOTPSessionRepository(client)
 	sender := emailsender.NewDummyEmailSender()
 	service := usecase.NewOTPService(repo, sender)
 
@@ -385,7 +386,7 @@ func TestOTPService_VerifyOTP_NotFound(t *testing.T) {
 		t.Error("VerifyOTP() expected error for non-existent OTP, got nil")
 	}
 
-	if !errors.Is(err, persistence.ErrOTPNotFound) {
+	if !errors.Is(err, entity.ErrSessionNotFound) {
 		t.Errorf("VerifyOTP() expected error containing ErrOTPNotFound, got %v", err)
 	}
 
@@ -404,7 +405,7 @@ func TestOTPService_VerifyOTP_MultipleFailedAttempts(t *testing.T) {
 		}
 	}()
 
-	repo := persistence.NewOTPRepository(client)
+	repo := persistence.NewOTPSessionRepository(client)
 	sender := emailsender.NewDummyEmailSender()
 	service := usecase.NewOTPService(repo, sender)
 
@@ -475,7 +476,7 @@ func TestOTPService_VerifyOTP_MultipleFailedAttempts(t *testing.T) {
 		t.Error("Fourth attempt should be blocked")
 	}
 
-	if !errors.Is(err, persistence.ErrTooManyAttempts) {
+	if !errors.Is(err, entity.ErrTooManyAttempts) {
 		t.Errorf("Expected ErrTooManyAttempts, got %v", err)
 	}
 
@@ -494,7 +495,7 @@ func TestOTPService_VerifyOTP_SuccessAfterFailedAttempt(t *testing.T) {
 		}
 	}()
 
-	repo := persistence.NewOTPRepository(client)
+	repo := persistence.NewOTPSessionRepository(client)
 	sender := emailsender.NewDummyEmailSender()
 	service := usecase.NewOTPService(repo, sender)
 
