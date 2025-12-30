@@ -18,7 +18,7 @@ Vue 3 + TypeScript frontend for passwordless OTP authentication.
 client_demo/
 ├── src/
 │   ├── components/
-│   │   └── auth/              # Auth UI components (8 files)
+│   │   └── auth/              # Auth UI components
 │   │       ├── OTPRequestForm.vue
 │   │       ├── OTPVerifyForm.vue
 │   │       ├── SignupForm.vue
@@ -26,7 +26,7 @@ client_demo/
 │   │       ├── ErrorMessage.vue
 │   │       └── SubmitButton.vue
 │   ├── composables/
-│   │   └── useAuthApi.ts      # Auth API calls (requestOTP, verifyOTP)
+│   │   └── useAuthApi.ts      # Auth API calls
 │   ├── config/
 │   │   ├── api.ts             # API endpoint config
 │   │   └── firebase.ts        # Firebase initialization
