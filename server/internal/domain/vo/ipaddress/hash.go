@@ -16,6 +16,7 @@ type Hash struct {
 // Uses SHA-256 to one-way hash the IP address for GDPR/privacy compliance.
 func NewHash(ipAddress string) *Hash {
 	hash := sha256.Sum256([]byte(ipAddress))
+
 	return &Hash{value: hex.EncodeToString(hash[:])}
 }
 
