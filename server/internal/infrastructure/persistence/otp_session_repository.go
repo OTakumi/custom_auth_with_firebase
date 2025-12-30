@@ -72,6 +72,7 @@ func (r *OTPSessionRepository) FindByEmail(ctx context.Context, userEmail *email
 		if status.Code(err) == codes.NotFound {
 			return nil, entity.ErrSessionNotFound
 		}
+
 		return nil, fmt.Errorf("failed to get otp session: %w", err)
 	}
 
@@ -108,7 +109,11 @@ func (r *OTPSessionRepository) Delete(ctx context.Context, userEmail *email.Emai
 
 // reconstructSessionFromDocument creates a domain entity from a Firestore document.
 // Uses RestorationData to ensure type-safe reconstruction with validation.
-func reconstructSessionFromDocument(doc otpSessionDocument, userEmail *email.Email, otpCode *otp.OTP) (*entity.OTPSession, error) {
+func reconstructSessionFromDocument(
+	doc otpSessionDocument,
+	userEmail *email.Email,
+	otpCode *otp.OTP,
+) (*entity.OTPSession, error) {
 	// Reconstruct IP address hash value object from stored hash string
 	var ipHash *ipaddress.Hash
 	if doc.IPAddressHash == "" {
