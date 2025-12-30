@@ -9,6 +9,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"custom_auth_api/internal/domain/entity"
+	voemail "custom_auth_api/internal/domain/vo/email"
+	vootp "custom_auth_api/internal/domain/vo/otp"
 	"custom_auth_api/internal/infrastructure/emailsender"
 	"custom_auth_api/internal/infrastructure/persistence"
 	"custom_auth_api/internal/usecase"
@@ -35,7 +38,7 @@ func TestOTPVerifyHandler_VerifyOTP_Success(t *testing.T) {
 	createTestUser(t, authClient, email)
 
 	// Generate OTP
-	otpRepo := persistence.NewOTPRepository(firestoreClient)
+	otpRepo := persistence.NewOTPSessionRepository(firestoreClient)
 	emailSender := emailsender.NewDummyEmailSender()
 	otpService := usecase.NewOTPService(otpRepo, emailSender)
 
@@ -160,7 +163,7 @@ func TestOTPVerifyHandler_VerifyOTP_InvalidOTP(t *testing.T) {
 	// Arrange: Create test user and generate OTP
 	createTestUser(t, authClient, email)
 
-	otpRepo := persistence.NewOTPRepository(firestoreClient)
+	otpRepo := persistence.NewOTPSessionRepository(firestoreClient)
 	emailSender := emailsender.NewDummyEmailSender()
 	otpService := usecase.NewOTPService(otpRepo, emailSender)
 
@@ -281,9 +284,14 @@ func TestOTPVerifyHandler_VerifyOTP_UserNotFound(t *testing.T) {
 	})
 
 	// Arrange: Create OTP but no user
-	otpRepo := persistence.NewOTPRepository(firestoreClient)
+	otpRepo := persistence.NewOTPSessionRepository(firestoreClient)
 
-	err := otpRepo.Save(ctx, email, "123456")
+	// Create OTP session entity
+	userEmail, _ := voemail.NewEmail(email)
+	otpCode, _ := vootp.FromString("123456")
+	session := entity.NewOTPSession(userEmail, otpCode)
+
+	err := otpRepo.Save(ctx, session)
 	if err != nil {
 		t.Fatalf("Failed to save OTP: %v", err)
 	}

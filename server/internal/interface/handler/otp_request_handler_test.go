@@ -59,7 +59,7 @@ func setupTestEnvironment(t *testing.T) (*firestore.Client, *auth.Client, *handl
 	}
 
 	// Initialize services and handlers
-	otpRepo := persistence.NewOTPRepository(firestoreClient)
+	otpRepo := persistence.NewOTPSessionRepository(firestoreClient)
 	emailSender := emailsender.NewDummyEmailSender()
 	otpService := usecase.NewOTPService(otpRepo, emailSender)
 	authService := usecase.NewAuthService(authClient)
