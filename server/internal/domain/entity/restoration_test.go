@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -252,7 +253,7 @@ func TestRestoreOTPSession(t *testing.T) {
 		err := session.Verify("wrong1")
 
 		// Assert - should increment to 3
-		if err != ErrInvalidOTP {
+		if !errors.Is(err, ErrInvalidOTP) {
 			t.Errorf("expected ErrInvalidOTP, got %v", err)
 		}
 		if session.Attempts() != 3 {
@@ -261,7 +262,7 @@ func TestRestoreOTPSession(t *testing.T) {
 
 		// Act - 4th attempt should fail with too many attempts
 		err = session.Verify("123456") // Even correct code should fail
-		if err != ErrTooManyAttempts {
+		if !errors.Is(err, ErrTooManyAttempts) {
 			t.Errorf("expected ErrTooManyAttempts, got %v", err)
 		}
 	})
@@ -290,7 +291,7 @@ func TestRestoreOTPSession(t *testing.T) {
 		}
 
 		err := session.Verify("123456")
-		if err != ErrSessionExpired {
+		if !errors.Is(err, ErrSessionExpired) {
 			t.Errorf("expected ErrSessionExpired, got %v", err)
 		}
 	})
