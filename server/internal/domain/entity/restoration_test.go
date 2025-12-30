@@ -1,4 +1,6 @@
-package entity
+package entity_test
+
+import "custom_auth_api/internal/domain/entity"
 
 import (
 	"errors"
@@ -8,6 +10,10 @@ import (
 	"custom_auth_api/internal/domain/vo/email"
 	"custom_auth_api/internal/domain/vo/ipaddress"
 	"custom_auth_api/internal/domain/vo/otp"
+)
+
+const (
+	testRestorationUserAgent = "Mozilla/5.0"
 )
 
 func TestNewRestorationData_Success(t *testing.T) {
@@ -20,10 +26,10 @@ func TestNewRestorationData_Success(t *testing.T) {
 	createdAt := time.Now().Add(-4 * time.Minute)
 	expiresAt := time.Now().Add(1 * time.Minute)
 	ipHash := ipaddress.FromString("abc123hash")
-	userAgent := "Mozilla/5.0"
+	userAgent := testRestorationUserAgent
 
 	// Act
-	data, err := NewRestorationData(
+	data, err := entity.NewRestorationData(
 		userEmail,
 		otpCode,
 		attempts,
@@ -144,7 +150,7 @@ func TestNewRestorationData_Validation(t *testing.T) {
 			t.Parallel()
 
 			// Act
-			data, err := NewRestorationData(
+			data, err := entity.NewRestorationData(
 				tt.email,
 				tt.code,
 				tt.attempts,
@@ -189,9 +195,9 @@ func TestRestoreOTPSession(t *testing.T) {
 		createdAt := time.Now().Add(-4 * time.Minute)
 		expiresAt := time.Now().Add(1 * time.Minute)
 		ipHash := ipaddress.FromString("abc123hash")
-		userAgent := "Mozilla/5.0"
+		userAgent := testRestorationUserAgent
 
-		data, _ := NewRestorationData(
+		data, _ := entity.NewRestorationData(
 			userEmail,
 			otpCode,
 			attempts,
@@ -202,7 +208,7 @@ func TestRestoreOTPSession(t *testing.T) {
 		)
 
 		// Act
-		session := RestoreOTPSession(data)
+		session := entity.RestoreOTPSession(data)
 
 		// Assert
 		if session == nil {
@@ -237,7 +243,7 @@ func TestRestoreOTPSession(t *testing.T) {
 		// Arrange - create a session with 2 failed attempts
 		userEmail, _ := email.NewEmail("test@example.com")
 		otpCode, _ := otp.FromString("123456")
-		data, _ := NewRestorationData(
+		data, _ := entity.NewRestorationData(
 			userEmail,
 			otpCode,
 			2, // 2 failed attempts already
@@ -247,14 +253,14 @@ func TestRestoreOTPSession(t *testing.T) {
 			"agent",
 		)
 
-		session := RestoreOTPSession(data)
+		session := entity.RestoreOTPSession(data)
 
 		// Act - verify with wrong code (3rd attempt)
 		err := session.Verify("wrong1")
 
 		// Assert - should increment to 3
-		if !errors.Is(err, ErrInvalidOTP) {
-			t.Errorf("expected ErrInvalidOTP, got %v", err)
+		if !errors.Is(err, entity.ErrInvalidOTP) {
+			t.Errorf("expected entity.ErrInvalidOTP, got %v", err)
 		}
 		if session.Attempts() != 3 {
 			t.Errorf("expected 3 attempts, got %d", session.Attempts())
@@ -262,8 +268,8 @@ func TestRestoreOTPSession(t *testing.T) {
 
 		// Act - 4th attempt should fail with too many attempts
 		err = session.Verify("123456") // Even correct code should fail
-		if !errors.Is(err, ErrTooManyAttempts) {
-			t.Errorf("expected ErrTooManyAttempts, got %v", err)
+		if !errors.Is(err, entity.ErrTooManyAttempts) {
+			t.Errorf("expected entity.ErrTooManyAttempts, got %v", err)
 		}
 	})
 
@@ -273,7 +279,7 @@ func TestRestoreOTPSession(t *testing.T) {
 		// Arrange - create an expired session
 		userEmail, _ := email.NewEmail("test@example.com")
 		otpCode, _ := otp.FromString("123456")
-		data, _ := NewRestorationData(
+		data, _ := entity.NewRestorationData(
 			userEmail,
 			otpCode,
 			0,
@@ -283,7 +289,7 @@ func TestRestoreOTPSession(t *testing.T) {
 			"agent",
 		)
 
-		session := RestoreOTPSession(data)
+		session := entity.RestoreOTPSession(data)
 
 		// Act & Assert
 		if !session.IsExpired() {
@@ -291,8 +297,8 @@ func TestRestoreOTPSession(t *testing.T) {
 		}
 
 		err := session.Verify("123456")
-		if !errors.Is(err, ErrSessionExpired) {
-			t.Errorf("expected ErrSessionExpired, got %v", err)
+		if !errors.Is(err, entity.ErrSessionExpired) {
+			t.Errorf("expected entity.ErrSessionExpired, got %v", err)
 		}
 	})
 }

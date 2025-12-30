@@ -2,9 +2,24 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
+)
+
+// Configuration errors.
+var (
+	ErrAllowedOriginsRequired = errors.New("ALLOWED_ORIGINS environment variable is required in production")
+	ErrInvalidIntegerValue    = errors.New("environment variable must be a valid integer")
+)
+
+// Default configuration values.
+const (
+	defaultPort                            = "8000"
+	defaultEnvironment                     = "development"
+	defaultRateLimitRequestsPerMinute      = 5
+	defaultRateLimitCleanupIntervalMinutes = 10
 )
 
 // Env holds all environment-based configuration values.
@@ -28,28 +43,31 @@ type Env struct {
 // Returns an error if required environment variables are missing or invalid.
 func LoadEnv() (*Env, error) {
 	env := &Env{
-		Port:        getEnvOrDefault("PORT", "8000"),
-		Environment: getEnvOrDefault("ENV", "development"),
+		Port:                            getEnvOrDefault("PORT", defaultPort),
+		Environment:                     getEnvOrDefault("ENV", defaultEnvironment),
+		AllowedOrigins:                  nil, // Will be set below for production
+		RateLimitRequestsPerMinute:      0,   // Will be set below
+		RateLimitCleanupIntervalMinutes: 0,   // Will be set below
 	}
 
 	// Validate and load CORS origins
 	if env.Environment == "production" {
 		allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 		if allowedOrigins == "" {
-			return nil, errors.New("ALLOWED_ORIGINS environment variable is required in production")
+			return nil, ErrAllowedOriginsRequired
 		}
 		env.AllowedOrigins = strings.Split(allowedOrigins, ",")
 	}
 	// In development, AllowedOrigins will be empty and handled by CORS middleware
 
 	// Load rate limiting configuration with defaults
-	requestsPerMinute, err := getEnvAsInt("RATE_LIMIT_REQUESTS_PER_MINUTE", 5)
+	requestsPerMinute, err := getEnvAsInt("RATE_LIMIT_REQUESTS_PER_MINUTE", defaultRateLimitRequestsPerMinute)
 	if err != nil {
 		return nil, err
 	}
 	env.RateLimitRequestsPerMinute = requestsPerMinute
 
-	cleanupInterval, err := getEnvAsInt("RATE_LIMIT_CLEANUP_INTERVAL_MINUTES", 10)
+	cleanupInterval, err := getEnvAsInt("RATE_LIMIT_CLEANUP_INTERVAL_MINUTES", defaultRateLimitCleanupIntervalMinutes)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +105,7 @@ func getEnvAsInt(key string, defaultValue int) (int, error) {
 
 	value, err := strconv.Atoi(valueStr)
 	if err != nil {
-		return 0, errors.New(key + " must be a valid integer")
+		return 0, fmt.Errorf("%w: %s", ErrInvalidIntegerValue, key)
 	}
 
 	return value, nil

@@ -1,8 +1,14 @@
-package config
+package config_test
 
 import (
 	"os"
 	"testing"
+
+	"custom_auth_api/internal/config"
+)
+
+const (
+	envProduction = "production"
 )
 
 func TestLoadEnv_Success(t *testing.T) {
@@ -11,7 +17,7 @@ func TestLoadEnv_Success(t *testing.T) {
 		clearEnv(t)
 
 		// Act
-		env, err := LoadEnv()
+		env, err := config.LoadEnv()
 
 		// Assert
 		if err != nil {
@@ -35,13 +41,13 @@ func TestLoadEnv_Success(t *testing.T) {
 		// Arrange
 		clearEnv(t)
 		t.Setenv("PORT", "9000")
-		t.Setenv("ENV", "production")
+		t.Setenv("ENV", envProduction)
 		t.Setenv("ALLOWED_ORIGINS", "https://example.com,https://app.example.com")
 		t.Setenv("RATE_LIMIT_REQUESTS_PER_MINUTE", "10")
 		t.Setenv("RATE_LIMIT_CLEANUP_INTERVAL_MINUTES", "20")
 
 		// Act
-		env, err := LoadEnv()
+		env, err := config.LoadEnv()
 
 		// Assert
 		if err != nil {
@@ -50,7 +56,7 @@ func TestLoadEnv_Success(t *testing.T) {
 		if env.Port != "9000" {
 			t.Errorf("expected port 9000, got %s", env.Port)
 		}
-		if env.Environment != "production" {
+		if env.Environment != envProduction {
 			t.Errorf("expected environment production, got %s", env.Environment)
 		}
 		if len(env.AllowedOrigins) != 2 {
@@ -72,10 +78,10 @@ func TestLoadEnv_ProductionValidation(t *testing.T) {
 	t.Run("returns error when ALLOWED_ORIGINS is missing in production", func(t *testing.T) {
 		// Arrange
 		clearEnv(t)
-		t.Setenv("ENV", "production")
+		t.Setenv("ENV", envProduction)
 
 		// Act
-		env, err := LoadEnv()
+		env, err := config.LoadEnv()
 
 		// Assert
 		if err == nil {
@@ -92,11 +98,11 @@ func TestLoadEnv_ProductionValidation(t *testing.T) {
 	t.Run("loads successfully with ALLOWED_ORIGINS in production", func(t *testing.T) {
 		// Arrange
 		clearEnv(t)
-		t.Setenv("ENV", "production")
+		t.Setenv("ENV", envProduction)
 		t.Setenv("ALLOWED_ORIGINS", "https://example.com")
 
 		// Act
-		env, err := LoadEnv()
+		env, err := config.LoadEnv()
 
 		// Assert
 		if err != nil {
@@ -115,7 +121,7 @@ func TestLoadEnv_InvalidRateLimitValues(t *testing.T) {
 		t.Setenv("RATE_LIMIT_REQUESTS_PER_MINUTE", "invalid")
 
 		// Act
-		env, err := LoadEnv()
+		env, err := config.LoadEnv()
 
 		// Assert
 		if err == nil {
@@ -132,7 +138,7 @@ func TestLoadEnv_InvalidRateLimitValues(t *testing.T) {
 		t.Setenv("RATE_LIMIT_CLEANUP_INTERVAL_MINUTES", "not-a-number")
 
 		// Act
-		env, err := LoadEnv()
+		env, err := config.LoadEnv()
 
 		// Assert
 		if err == nil {
@@ -149,7 +155,7 @@ func TestEnv_IsProduction(t *testing.T) {
 
 	t.Run("returns true when environment is production", func(t *testing.T) {
 		t.Parallel()
-		env := &Env{Environment: "production"}
+		env := &config.Env{Environment: envProduction}
 		if !env.IsProduction() {
 			t.Error("expected IsProduction to return true")
 		}
@@ -157,7 +163,7 @@ func TestEnv_IsProduction(t *testing.T) {
 
 	t.Run("returns false when environment is not production", func(t *testing.T) {
 		t.Parallel()
-		env := &Env{Environment: "development"}
+		env := &config.Env{Environment: "development"}
 		if env.IsProduction() {
 			t.Error("expected IsProduction to return false")
 		}
@@ -169,7 +175,7 @@ func TestEnv_IsDevelopment(t *testing.T) {
 
 	t.Run("returns true when environment is development", func(t *testing.T) {
 		t.Parallel()
-		env := &Env{Environment: "development"}
+		env := &config.Env{Environment: "development"}
 		if !env.IsDevelopment() {
 			t.Error("expected IsDevelopment to return true")
 		}
@@ -177,7 +183,7 @@ func TestEnv_IsDevelopment(t *testing.T) {
 
 	t.Run("returns false when environment is not development", func(t *testing.T) {
 		t.Parallel()
-		env := &Env{Environment: "production"}
+		env := &config.Env{Environment: envProduction}
 		if env.IsDevelopment() {
 			t.Error("expected IsDevelopment to return false")
 		}

@@ -1,7 +1,13 @@
-package ipaddress
+package ipaddress_test
+
+import "custom_auth_api/internal/domain/vo/ipaddress"
 
 import (
 	"testing"
+)
+
+const (
+	testIP = "192.168.1.1"
 )
 
 func TestNewHash(t *testing.T) {
@@ -11,10 +17,10 @@ func TestNewHash(t *testing.T) {
 		t.Parallel()
 
 		// Arrange
-		ip := "192.168.1.1"
+		ip := testIP
 
 		// Act
-		hash := NewHash(ip)
+		hash := ipaddress.NewHash(ip)
 
 		// Assert
 		if hash == nil {
@@ -33,11 +39,11 @@ func TestNewHash(t *testing.T) {
 		t.Parallel()
 
 		// Arrange
-		ip := "192.168.1.1"
+		ip := testIP
 
 		// Act
-		hash1 := NewHash(ip)
-		hash2 := NewHash(ip)
+		hash1 := ipaddress.NewHash(ip)
+		hash2 := ipaddress.NewHash(ip)
 
 		// Assert
 		if hash1.String() != hash2.String() {
@@ -49,12 +55,12 @@ func TestNewHash(t *testing.T) {
 		t.Parallel()
 
 		// Arrange
-		ip1 := "192.168.1.1"
+		ip1 := testIP
 		ip2 := "192.168.1.2"
 
 		// Act
-		hash1 := NewHash(ip1)
-		hash2 := NewHash(ip2)
+		hash1 := ipaddress.NewHash(ip1)
+		hash2 := ipaddress.NewHash(ip2)
 
 		// Assert
 		if hash1.String() == hash2.String() {
@@ -66,7 +72,7 @@ func TestNewHash(t *testing.T) {
 		t.Parallel()
 
 		// Act
-		hash := NewHash("")
+		hash := ipaddress.NewHash("")
 
 		// Assert
 		if hash == nil {
@@ -88,11 +94,11 @@ func TestNewHash(t *testing.T) {
 		ip := "10.0.0.1"
 
 		// Act
-		hash := NewHash(ip)
+		hash := ipaddress.NewHash(ip)
 
 		// Assert
 		for _, c := range hash.String() {
-			if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+			if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
 				t.Errorf("hash contains invalid hex character: %c", c)
 			}
 		}
@@ -106,7 +112,7 @@ func TestNewEmptyHash(t *testing.T) {
 		t.Parallel()
 
 		// Act
-		hash := NewEmptyHash()
+		hash := ipaddress.NewEmptyHash()
 
 		// Assert
 		if hash == nil {
@@ -126,17 +132,17 @@ func TestHash_IsEmpty(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		hash     *Hash
+		hash     *ipaddress.Hash
 		expected bool
 	}{
 		{
 			name:     "empty hash returns true",
-			hash:     NewEmptyHash(),
+			hash:     ipaddress.NewEmptyHash(),
 			expected: true,
 		},
 		{
 			name:     "non-empty hash returns false",
-			hash:     NewHash("192.168.1.1"),
+			hash:     ipaddress.NewHash(testIP),
 			expected: false,
 		},
 	}
@@ -164,7 +170,7 @@ func TestHash_String(t *testing.T) {
 
 		// Arrange
 		ip := "203.0.113.0"
-		hash := NewHash(ip)
+		hash := ipaddress.NewHash(ip)
 
 		// Act
 		value := hash.String()
@@ -182,7 +188,7 @@ func TestHash_String(t *testing.T) {
 		t.Parallel()
 
 		// Arrange
-		hash := NewEmptyHash()
+		hash := ipaddress.NewEmptyHash()
 
 		// Act
 		value := hash.String()

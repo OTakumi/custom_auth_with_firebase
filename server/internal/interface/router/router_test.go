@@ -1,4 +1,4 @@
-package router
+package router_test
 
 import (
 	"net/http"
@@ -7,6 +7,7 @@ import (
 
 	"custom_auth_api/internal/config"
 	"custom_auth_api/internal/interface/handler"
+	"custom_auth_api/internal/interface/router"
 	"custom_auth_api/internal/usecase"
 )
 
@@ -22,17 +23,17 @@ func TestNewRouter_HealthCheck(t *testing.T) {
 	}
 
 	// Create mock handlers (nil services for health check test)
-	handlers := &Handlers{
+	handlers := &router.Handlers{
 		OTPRequest: handler.NewOTPRequestHandler(nil, nil),
 		OTPVerify:  handler.NewOTPVerifyHandler(nil, nil),
 	}
 
-	router := NewRouter(env, handlers)
+	r := router.NewRouter(env, handlers)
 
 	// Act
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	r.ServeHTTP(w, req)
 
 	// Assert
 	if w.Code != http.StatusOK {
@@ -57,12 +58,12 @@ func TestNewRouter_RoutesRegistered(t *testing.T) {
 
 	// Create mock auth service
 	mockAuthService := usecase.NewAuthService(nil)
-	handlers := &Handlers{
+	handlers := &router.Handlers{
 		OTPRequest: handler.NewOTPRequestHandler(nil, mockAuthService),
 		OTPVerify:  handler.NewOTPVerifyHandler(nil, mockAuthService),
 	}
 
-	router := NewRouter(env, handlers)
+	r := router.NewRouter(env, handlers)
 
 	testCases := []struct {
 		name       string
@@ -101,7 +102,7 @@ func TestNewRouter_RoutesRegistered(t *testing.T) {
 			// Act
 			req := httptest.NewRequest(tc.method, tc.path, nil)
 			w := httptest.NewRecorder()
-			router.ServeHTTP(w, req)
+			r.ServeHTTP(w, req)
 
 			// Assert
 			if tc.shouldFind {

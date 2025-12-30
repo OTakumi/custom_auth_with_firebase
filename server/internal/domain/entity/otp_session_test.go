@@ -1,4 +1,6 @@
-package entity
+package entity_test
+
+import "custom_auth_api/internal/domain/entity"
 
 import (
 	"errors"
@@ -7,6 +9,11 @@ import (
 
 	"custom_auth_api/internal/domain/vo/email"
 	"custom_auth_api/internal/domain/vo/otp"
+)
+
+const (
+	testIPAddress = "192.168.1.1"
+	testUserAgent = "Mozilla/5.0"
 )
 
 // TestNewOTPSession tests the creation of a new OTP session with default settings.
@@ -28,7 +35,7 @@ func TestNewOTPSession(t *testing.T) {
 		}
 
 		// Act
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Assert
 		if session == nil {
@@ -53,7 +60,7 @@ func TestNewOTPSession(t *testing.T) {
 		before := time.Now()
 
 		// Act
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Assert
 		after := time.Now()
@@ -72,7 +79,7 @@ func TestNewOTPSession(t *testing.T) {
 		testOTP, _ := otp.NewOTP()
 
 		// Act
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Assert
 		expectedExpiration := session.CreatedAt().Add(5 * time.Minute)
@@ -91,7 +98,7 @@ func TestNewOTPSession(t *testing.T) {
 		testOTP, _ := otp.NewOTP()
 
 		// Act
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Assert
 		if session.Attempts() != 0 {
@@ -110,11 +117,11 @@ func TestNewOTPSessionWithContext(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.NewOTP()
-		ipAddress := "192.168.1.1"
-		userAgent := "Mozilla/5.0"
+		ipAddress := testIPAddress
+		userAgent := testUserAgent
 
 		// Act
-		session := NewOTPSessionWithContext(testEmail, testOTP, ipAddress, userAgent)
+		session := entity.NewOTPSessionWithContext(testEmail, testOTP, ipAddress, userAgent)
 
 		// Assert
 		if session.IPAddressHash().IsEmpty() {
@@ -127,7 +134,7 @@ func TestNewOTPSessionWithContext(t *testing.T) {
 		}
 
 		// Should be deterministic - same IP should produce same hash
-		session2 := NewOTPSessionWithContext(testEmail, testOTP, ipAddress, userAgent)
+		session2 := entity.NewOTPSessionWithContext(testEmail, testOTP, ipAddress, userAgent)
 		if session.IPAddressHash().String() != session2.IPAddressHash().String() {
 			t.Error("same IP should produce same hash")
 		}
@@ -139,11 +146,11 @@ func TestNewOTPSessionWithContext(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.NewOTP()
-		ipAddress := "192.168.1.1"
+		ipAddress := testIPAddress
 		userAgent := "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
 		// Act
-		session := NewOTPSessionWithContext(testEmail, testOTP, ipAddress, userAgent)
+		session := entity.NewOTPSessionWithContext(testEmail, testOTP, ipAddress, userAgent)
 
 		// Assert
 		if session.UserAgent() != userAgent {
@@ -159,7 +166,7 @@ func TestNewOTPSessionWithContext(t *testing.T) {
 		testOTP, _ := otp.NewOTP()
 
 		// Act
-		session := NewOTPSessionWithContext(testEmail, testOTP, "", "Mozilla/5.0")
+		session := entity.NewOTPSessionWithContext(testEmail, testOTP, "", testUserAgent)
 
 		// Assert
 		// Empty IP should produce hash of empty string
@@ -176,7 +183,7 @@ func TestNewOTPSessionWithContext(t *testing.T) {
 		testOTP, _ := otp.NewOTP()
 
 		// Act
-		session := NewOTPSessionWithContext(testEmail, testOTP, "192.168.1.1", "")
+		session := entity.NewOTPSessionWithContext(testEmail, testOTP, testIPAddress, "")
 
 		// Assert
 		if session.UserAgent() != "" {
@@ -195,7 +202,7 @@ func TestVerify_Success(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.FromString("123456")
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Act
 		err := session.Verify("123456")
@@ -212,7 +219,7 @@ func TestVerify_Success(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.FromString("123456")
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Act
 		_ = session.Verify("123456")
@@ -229,7 +236,7 @@ func TestVerify_Success(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.FromString("123456")
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Simulate time passing (but still within window)
 		time.Sleep(10 * time.Millisecond)
@@ -248,20 +255,20 @@ func TestVerify_Success(t *testing.T) {
 func TestVerify_Failure(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns ErrInvalidOTP when code does not match", func(t *testing.T) {
+	t.Run("returns entity.ErrInvalidOTP when code does not match", func(t *testing.T) {
 		t.Parallel()
 
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.FromString("123456")
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Act
 		err := session.Verify("654321")
 
 		// Assert
-		if !errors.Is(err, ErrInvalidOTP) {
-			t.Errorf("expected ErrInvalidOTP, got %v", err)
+		if !errors.Is(err, entity.ErrInvalidOTP) {
+			t.Errorf("expected entity.ErrInvalidOTP, got %v", err)
 		}
 	})
 
@@ -271,7 +278,7 @@ func TestVerify_Failure(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.FromString("123456")
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Act
 		_ = session.Verify("wrong1")
@@ -290,25 +297,25 @@ func TestVerify_Failure(t *testing.T) {
 		}
 	})
 
-	t.Run("returns ErrTooManyAttempts after 3 failures", func(t *testing.T) {
+	t.Run("returns entity.ErrTooManyAttempts after 3 failures", func(t *testing.T) {
 		t.Parallel()
 
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.FromString("123456")
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Act - make 3 failed attempts
 		_ = session.Verify("wrong1")
 		_ = session.Verify("wrong2")
 		_ = session.Verify("wrong3")
 
-		// Fourth attempt should fail with ErrTooManyAttempts
+		// Fourth attempt should fail with entity.ErrTooManyAttempts
 		err := session.Verify("123456") // Even correct code should fail
 
 		// Assert
-		if !errors.Is(err, ErrTooManyAttempts) {
-			t.Errorf("expected ErrTooManyAttempts, got %v", err)
+		if !errors.Is(err, entity.ErrTooManyAttempts) {
+			t.Errorf("expected entity.ErrTooManyAttempts, got %v", err)
 		}
 	})
 }
@@ -323,7 +330,7 @@ func TestCanVerify(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.NewOTP()
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Act
 		err := session.CanVerify()
@@ -334,13 +341,13 @@ func TestCanVerify(t *testing.T) {
 		}
 	})
 
-	t.Run("returns ErrTooManyAttempts when attempts >= 3", func(t *testing.T) {
+	t.Run("returns entity.ErrTooManyAttempts when attempts >= 3", func(t *testing.T) {
 		t.Parallel()
 
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.FromString("123456")
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Make 3 failed attempts
 		_ = session.Verify("wrong1")
@@ -351,8 +358,8 @@ func TestCanVerify(t *testing.T) {
 		err := session.CanVerify()
 
 		// Assert
-		if !errors.Is(err, ErrTooManyAttempts) {
-			t.Errorf("expected ErrTooManyAttempts, got %v", err)
+		if !errors.Is(err, entity.ErrTooManyAttempts) {
+			t.Errorf("expected entity.ErrTooManyAttempts, got %v", err)
 		}
 	})
 }
@@ -367,7 +374,7 @@ func TestIsExpired(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.NewOTP()
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Act
 		expired := session.IsExpired()
@@ -384,7 +391,7 @@ func TestIsExpired(t *testing.T) {
 		// Arrange - create a session that is already expired
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.NewOTP()
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Wait for slightly longer than expiration time
 		// Note: In production, we use 5 minutes, but for testing we'll just check logic
@@ -412,7 +419,7 @@ func TestRecordFailedAttempt(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.NewOTP()
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Act
 		session.RecordFailedAttempt()
@@ -429,7 +436,7 @@ func TestRecordFailedAttempt(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.NewOTP()
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 
 		// Act
 		session.RecordFailedAttempt()
@@ -448,7 +455,7 @@ func TestRecordFailedAttempt(t *testing.T) {
 		// Arrange
 		testEmail, _ := email.NewEmail("test@example.com")
 		testOTP, _ := otp.FromString("123456")
-		session := NewOTPSession(testEmail, testOTP)
+		session := entity.NewOTPSession(testEmail, testOTP)
 		originalCreatedAt := session.CreatedAt()
 
 		// Act
@@ -472,9 +479,9 @@ func TestGetters(t *testing.T) {
 	// Arrange
 	testEmail, _ := email.NewEmail("test@example.com")
 	testOTP, _ := otp.FromString("123456")
-	ipAddress := "192.168.1.1"
-	userAgent := "Mozilla/5.0"
-	session := NewOTPSessionWithContext(testEmail, testOTP, ipAddress, userAgent)
+	ipAddress := testIPAddress
+	userAgent := testUserAgent
+	session := entity.NewOTPSessionWithContext(testEmail, testOTP, ipAddress, userAgent)
 
 	t.Run("Email returns correct value", func(t *testing.T) {
 		if session.Email() != testEmail {
