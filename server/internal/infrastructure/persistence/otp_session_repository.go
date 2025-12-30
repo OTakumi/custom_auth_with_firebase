@@ -77,7 +77,8 @@ func (r *OTPSessionRepository) FindByEmail(ctx context.Context, userEmail *email
 	}
 
 	var doc otpSessionDocument
-	if err := docSnap.DataTo(&doc); err != nil {
+	err = docSnap.DataTo(&doc)
+	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal otp session: %w", err)
 	}
 
