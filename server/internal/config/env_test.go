@@ -148,6 +148,7 @@ func TestEnv_IsProduction(t *testing.T) {
 	t.Parallel()
 
 	t.Run("returns true when environment is production", func(t *testing.T) {
+		t.Parallel()
 		env := &Env{Environment: "production"}
 		if !env.IsProduction() {
 			t.Error("expected IsProduction to return true")
@@ -155,6 +156,7 @@ func TestEnv_IsProduction(t *testing.T) {
 	})
 
 	t.Run("returns false when environment is not production", func(t *testing.T) {
+		t.Parallel()
 		env := &Env{Environment: "development"}
 		if env.IsProduction() {
 			t.Error("expected IsProduction to return false")
@@ -166,6 +168,7 @@ func TestEnv_IsDevelopment(t *testing.T) {
 	t.Parallel()
 
 	t.Run("returns true when environment is development", func(t *testing.T) {
+		t.Parallel()
 		env := &Env{Environment: "development"}
 		if !env.IsDevelopment() {
 			t.Error("expected IsDevelopment to return true")
@@ -173,6 +176,7 @@ func TestEnv_IsDevelopment(t *testing.T) {
 	})
 
 	t.Run("returns false when environment is not development", func(t *testing.T) {
+		t.Parallel()
 		env := &Env{Environment: "production"}
 		if env.IsDevelopment() {
 			t.Error("expected IsDevelopment to return false")
@@ -184,9 +188,9 @@ func TestEnv_IsDevelopment(t *testing.T) {
 // This ensures tests are isolated and don't interfere with each other.
 func clearEnv(t *testing.T) {
 	t.Helper()
-	os.Unsetenv("PORT")
-	os.Unsetenv("ENV")
-	os.Unsetenv("ALLOWED_ORIGINS")
-	os.Unsetenv("RATE_LIMIT_REQUESTS_PER_MINUTE")
-	os.Unsetenv("RATE_LIMIT_CLEANUP_INTERVAL_MINUTES")
+	_ = os.Unsetenv("PORT")
+	_ = os.Unsetenv("ENV")
+	_ = os.Unsetenv("ALLOWED_ORIGINS")
+	_ = os.Unsetenv("RATE_LIMIT_REQUESTS_PER_MINUTE")
+	_ = os.Unsetenv("RATE_LIMIT_CLEANUP_INTERVAL_MINUTES")
 }
