@@ -18,6 +18,10 @@ services:
       - FIRESTORE_EMULATOR_HOST=firebase:8080
       - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
       - GOOGLE_CLOUD_PROJECT=demo-project
+      - ENV=development
+      # For production, set ENV=production and ALLOWED_ORIGINS
+      # - ENV=production
+      # - ALLOWED_ORIGINS=https://yourdomain.com
     ports:
       - "8000:8000"
 volumes:

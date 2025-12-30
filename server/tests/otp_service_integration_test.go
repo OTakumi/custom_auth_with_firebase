@@ -44,7 +44,7 @@ func TestOTPService_Integration_GenerateAndSendOTP(t *testing.T) {
 		}
 	})
 
-	otpRepo := persistence.NewOTPRepository(client)
+	otpRepo := persistence.NewOTPSessionRepository(client)
 	emailSender := emailsender.NewDummyEmailSender()
 	otpService := usecase.NewOTPService(otpRepo, emailSender)
 

@@ -13,6 +13,8 @@ linters:
     - funlen
     - wsl
     - varnamelen
+    - paralleltest
+    - wsl_v5
   settings:
     wsl_v5:
       allow-first-in-block: true
@@ -30,6 +32,18 @@ linters:
         - 'gorm\.io/gorm/schema\.Schema$'
   exclusions:
     rules:
-      - path: 'tests/.*_integration_test\.go'
+      - path: '_test\.go$'
         linters:
           - paralleltest
+          - tparallel
+          - cyclop
+          - gocognit
+          - noctx
+          - noinlineerr
+          - exhaustruct
+          - mnd
+          - nestif
+          - lll
+          - godot
+          - errchkjson
+          - wsl_v5

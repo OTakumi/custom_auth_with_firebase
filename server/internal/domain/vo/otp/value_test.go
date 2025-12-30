@@ -38,3 +38,76 @@ func TestNewOTP(t *testing.T) {
 		}
 	})
 }
+
+func TestFromString(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{
+			name:    "valid 6-digit code",
+			input:   "123456",
+			wantErr: false,
+		},
+		{
+			name:    "valid code with leading zeros",
+			input:   "000123",
+			wantErr: false,
+		},
+		{
+			name:    "invalid - contains non-digits",
+			input:   "12345a",
+			wantErr: true,
+		},
+		{
+			name:    "invalid - too short (5 digits)",
+			input:   "12345",
+			wantErr: true,
+		},
+		{
+			name:    "invalid - too long (7 digits)",
+			input:   "1234567",
+			wantErr: true,
+		},
+		{
+			name:    "invalid - empty string",
+			input:   "",
+			wantErr: true,
+		},
+		{
+			name:    "invalid - contains spaces",
+			input:   "123 456",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			result, err := otp.FromString(tt.input)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("FromString(%q) expected error, but got nil", tt.input)
+				}
+				if result != nil {
+					t.Errorf("FromString(%q) expected nil result on error, but got %v", tt.input, result)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("FromString(%q) unexpected error: %v", tt.input, err)
+				}
+				if result == nil {
+					t.Errorf("FromString(%q) expected non-nil result, but got nil", tt.input)
+				}
+				if result != nil && result.String() != tt.input {
+					t.Errorf("FromString(%q) expected String() to return %q, but got %q", tt.input, tt.input, result.String())
+				}
+			}
+		})
+	}
+}

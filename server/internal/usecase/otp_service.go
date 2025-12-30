@@ -2,66 +2,115 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 
 	"custom_auth_api/internal/domain/emailsender"
+	"custom_auth_api/internal/domain/entity"
 	"custom_auth_api/internal/domain/repository"
+	"custom_auth_api/internal/domain/vo/email"
 	"custom_auth_api/internal/domain/vo/otp"
 )
 
-var (
-	ErrInvalidOTP = errors.New("invalid OTP")
-)
-
-// OTPService handles OTP related business logic, such as generation, storage, and sending.
+// OTPService handles OTP (One-Time Password) operations using entity-based design.
+//
+// Responsibilities:
+// - Orchestrate OTP session creation and email delivery
+// - Delegate business logic to OTPSession entity
+// - Coordinate between repository and email sender
+//
+// Business Rules (delegated to OTPSession entity):
+// - OTP expiration: 5 minutes (defined in entity.DefaultOTPExpiration)
+// - Maximum verification attempts: 3 (defined in entity.MaxVerificationAttempts)
+// - One-time use: Session deleted after successful verification
+// - Timing-safe comparison for OTP verification
+//
+// Note:
+// - User existence validation is handled by AuthService
+// - Email format validation is handled by email value object.
 type OTPService struct {
-	otpRepo     repository.OTPRepository
+	sessionRepo repository.OTPSessionRepository
 	emailSender emailsender.EmailSender
 }
 
 // NewOTPService creates a new OTPService.
-func NewOTPService(otpRepo repository.OTPRepository, emailSender emailsender.EmailSender) *OTPService {
-	return &OTPService{otpRepo: otpRepo, emailSender: emailSender}
+func NewOTPService(sessionRepo repository.OTPSessionRepository, emailSender emailsender.EmailSender) *OTPService {
+	return &OTPService{
+		sessionRepo: sessionRepo,
+		emailSender: emailSender,
+	}
 }
 
-// GenerateAndSendOTP generates a 6-digit one-time password, saves it to the repository, and sends it via email.
-func (s *OTPService) GenerateAndSendOTP(ctx context.Context, email string) (string, error) {
-	newOtp, err := otp.NewOTP()
+// GenerateAndSendOTP generates a new OTP session and sends the OTP code via email.
+// Returns the generated OTP code string (for testing purposes).
+func (s *OTPService) GenerateAndSendOTP(ctx context.Context, emailAddr string) (string, error) {
+	// Validate and create email value object
+	userEmail, err := email.NewEmail(emailAddr)
+	if err != nil {
+		return "", fmt.Errorf("invalid email address: %w", err)
+	}
+
+	// Generate OTP code
+	otpCode, err := otp.NewOTP()
 	if err != nil {
 		return "", fmt.Errorf("failed to generate OTP: %w", err)
 	}
 
-	otpStr := newOtp.String()
+	// Create new OTP session entity
+	session := entity.NewOTPSession(userEmail, otpCode)
 
-	// Save the OTP to the repository
-	err = s.otpRepo.Save(ctx, email, otpStr)
+	// Persist the session
+	err = s.sessionRepo.Save(ctx, session)
 	if err != nil {
-		return "", fmt.Errorf("failed to save OTP: %w", err)
+		return "", fmt.Errorf("failed to save OTP session: %w", err)
 	}
 
-	// Send the OTP via email
-	err = s.emailSender.SendOTP(ctx, email, otpStr)
+	// Send OTP via email
+	err = s.emailSender.SendOTP(ctx, emailAddr, otpCode.String())
 	if err != nil {
 		return "", fmt.Errorf("failed to send OTP email: %w", err)
 	}
 
-	// For now, also log the OTP to the console for visibility (optional after email sending is fully implemented).
-	log.Printf("OTP for %s: %s (sent via email sender)", email, otpStr)
-
-	return otpStr, nil
+	return otpCode.String(), nil
 }
 
-// VerifyOTP validates the provided OTP against the stored one.
-func (s *OTPService) VerifyOTP(ctx context.Context, email, otp string) (bool, error) {
-	storedOTP, err := s.otpRepo.Find(ctx, email)
+// VerifyOTP validates the provided OTP code against the stored session.
+// Returns true if verification succeeds, false otherwise.
+// Automatically handles:
+// - Expiration checking (via entity)
+// - Attempt counting (via entity)
+// - Session deletion on success.
+func (s *OTPService) VerifyOTP(ctx context.Context, emailAddr, inputCode string) (bool, error) {
+	// Validate and create email value object
+	userEmail, err := email.NewEmail(emailAddr)
 	if err != nil {
-		return false, fmt.Errorf("failed to retrieve OTP for verification: %w", err)
+		return false, fmt.Errorf("invalid email address: %w", err)
 	}
 
-	if storedOTP != otp {
-		return false, fmt.Errorf("%w for email: %s", ErrInvalidOTP, email)
+	// Retrieve session from repository
+	session, err := s.sessionRepo.FindByEmail(ctx, userEmail)
+	if err != nil {
+		return false, fmt.Errorf("failed to retrieve OTP session: %w", err)
+	}
+
+	// Verify OTP using entity business logic
+	err = session.Verify(inputCode)
+	if err != nil {
+		// Save updated attempts count (entity incremented it on failure)
+		saveErr := s.sessionRepo.Save(ctx, session)
+		if saveErr != nil {
+			// Log warning but return the original verification error
+			return false, fmt.Errorf("verification failed (%w) and save failed: %w", err, saveErr)
+		}
+
+		return false, fmt.Errorf("OTP verification failed: %w", err)
+	}
+
+	// Successful verification - delete session (one-time use)
+	err = s.sessionRepo.Delete(ctx, userEmail)
+	if err != nil {
+		// Verification succeeded but cleanup failed
+		// The session will eventually expire naturally
+		return true, fmt.Errorf("OTP verified but cleanup failed: %w", err)
 	}
 
 	return true, nil

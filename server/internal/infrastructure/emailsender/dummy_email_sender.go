@@ -15,9 +15,10 @@ func NewDummyEmailSender() *DummyEmailSender {
 	return &DummyEmailSender{}
 }
 
-// SendOTP logs the OTP email content to the console.
+// SendOTP simulates sending an OTP email.
+// In development, check the Firestore Emulator UI to see the OTP.
 func (s *DummyEmailSender) SendOTP(ctx context.Context, toEmail, otp string) error {
-	log.Printf("Dummy Email Sent to: %s with OTP: %s", toEmail, otp)
+	log.Printf("Dummy Email Sent to: %s (check Firestore Emulator UI for OTP)", toEmail)
 
 	return nil
 }

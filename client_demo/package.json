@@ -1,0 +1,31 @@
+{
+  "name": "client_demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "firebase": "^12.7.0",
+    "tree-sitter-cli": "^0.26.3",
+    "vue": "^3.5.26",
+    "vue-router": "4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^24.10.4",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "@vue/tsconfig": "^0.8.1",
+    "autoprefixer": "^10.4.23",
+    "daisyui": "^5.5.14",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.0",
+    "vue-tsc": "^3.2.1"
+  }
+}
