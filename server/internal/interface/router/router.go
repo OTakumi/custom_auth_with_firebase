@@ -39,7 +39,7 @@ func NewRouter(env *config.Env, handlers *Handlers) *gin.Engine {
 
 // setupCORS configures CORS middleware based on environment settings.
 // In production: Only allows specified origins from ALLOWED_ORIGINS env var
-// In development: Allows all origins
+// In development: Allows all origins.
 func setupCORS(env *config.Env) gin.HandlerFunc {
 	corsConfig := cors.DefaultConfig()
 
