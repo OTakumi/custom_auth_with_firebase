@@ -276,8 +276,8 @@ func TestRestoreOTPSession(t *testing.T) {
 			userEmail,
 			otpCode,
 			0,
-			time.Now().Add(-10*time.Minute),                  // created 10 min ago
-			time.Now().Add(-5*time.Minute),                   // expired 5 min ago
+			time.Now().Add(-10*time.Minute), // created 10 min ago
+			time.Now().Add(-5*time.Minute),  // expired 5 min ago
 			ipaddress.FromString("hash"),
 			"agent",
 		)
